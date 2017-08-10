@@ -1,0 +1,22 @@
+Index: mt76x2e-p4rev-113843/src/ate/common/rt_qa.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/ate/common/rt_qa.c
++++ mt76x2e-p4rev-113843/src/ate/common/rt_qa.c
+@@ -2916,7 +2916,7 @@ static  INT DO_RACFG_CMD_ATE_MT_RF_READ_
+ 	for (pos = offset; pos < (offset+len); pos += 4)
+ 	{
+ 		*(UINT32 *)(&pRaCfg->data[pos - offset])= 0;
+-		mt_rf_read(pAd, bank, pos, &pRaCfg->data[pos - offset]);
++		mt_rf_read(pAd, bank, pos, (uint32_t *) &pRaCfg->data[pos - offset]);
+ //		DBGPRINT(RT_DEBUG_WARN,("rf bank%u r R%u=0x%02X\n"
+ //			, bank, pos, pRaCfg->data[pos - offset]));
+ 		DBGPRINT(RT_DEBUG_TRACE,("rf bank%u r 0x%04X=0x%04X\n"
+@@ -2971,7 +2971,7 @@ static  INT DO_RACFG_CMD_ATE_MT_RF_WRITE
+ //	DBGPRINT(RT_DEBUG_WARN,("\n\n"));
+ 	for (pos = offset; pos < (offset+len); pos += 4)
+ 	{
+-		value = pRaCfg->data + 2 + sizeof(offset) + sizeof(len) + (pos - offset);
++		*value = pRaCfg->data + 2 + sizeof(offset) + sizeof(len) + (pos - offset);
+ 		mt_rf_write(pAd, bank, pos, *value);
+ //		DBGPRINT(RT_DEBUG_WARN,("rf bank%u w R%u=0x%02X\n", bank, pos, *value));
+ 		DBGPRINT(RT_DEBUG_WARN,("iwpriv %s0 set rf=%u-%u-%02X\n"

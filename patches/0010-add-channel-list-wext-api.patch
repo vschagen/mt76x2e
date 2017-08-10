@@ -1,0 +1,51 @@
+Index: mt76x2e-p4rev-113843/src/os/linux/ap_ioctl.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/os/linux/ap_ioctl.c	2014-11-27 16:19:59.000000000 +0800
++++ mt76x2e-p4rev-113843/src/os/linux/ap_ioctl.c	2015-06-02 16:19:41.213570969 +0800
+@@ -25,7 +25,7 @@
+ */
+ #define RTMP_MODULE_OS
+ 
+-/*#include "rt_config.h" */
++#include "rt_config.h" 
+ #include "rtmp_comm.h"
+ #include "rt_os_util.h"
+ #include "rt_os_net.h"
+@@ -266,9 +266,12 @@
+ 			break;
+ 		case SIOCGIWRANGE:	/*Get range of parameters */
+ 		    {
++			    
++				DBGPRINT(RT_DEBUG_TRACE, ("enter here ::0x%x %s %d \n",cmd,__FILE__,__LINE__));
+ /*				struct iw_range range; */
+ 				struct iw_range *prange = NULL;
+ 				UINT32 len;
++				int i, val;
+ 
+ 				/* allocate memory */
+ 				os_alloc_mem(NULL, (UCHAR **)&prange, sizeof(struct iw_range));
+@@ -282,6 +285,24 @@
+ 				prange->we_version_compiled = WIRELESS_EXT;
+ 				prange->we_version_source = 14;
+ 
++				val = 0;
++				PRTMP_ADAPTER pAdap = (PRTMP_ADAPTER)pAd;
++				UINT32 freq = 0;
++			//	pAd->ChannelListNum = index;   
++				prange->num_channels = pAdap->ChannelListNum;
++				for(i = 0; i < prange->num_channels; i++) {
++				        UCHAR chIndex = pAdap->ChannelList[i].Channel;	
++					RTMP_MapChannelID2KHZ(chIndex,&freq);
++					//prange->freq[i].i = i + 1;
++					prange->freq[i].i = chIndex;
++					prange->freq[i].m = freq*100;
++					prange->freq[i].e = 1;
++					val ++;
++					if (val == IW_MAX_FREQUENCIES)
++						break;
++				}
++				prange->num_frequency = val;
++
+ 				/*
+ 					what is correct max? This was not
+ 					documented exactly. At least

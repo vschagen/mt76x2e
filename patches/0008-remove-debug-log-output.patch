@@ -1,0 +1,304 @@
+Index: mt76x2e-p4rev-113843/src/os/linux/rt_linux.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/os/linux/rt_linux.c	2015-05-18 18:41:17.924248962 +0800
++++ mt76x2e-p4rev-113843/src/os/linux/rt_linux.c	2015-05-18 18:41:17.908248964 +0800
+@@ -85,7 +85,7 @@
+ }
+ 
+ 
+-ULONG RTDebugLevel = RT_DEBUG_ERROR;
++ULONG RTDebugLevel = RT_DEBUG_OFF;
+ ULONG RTDebugFunc = 0;
+ 
+ #ifdef OS_ABL_FUNC_SUPPORT
+Index: mt76x2e-p4rev-113843/src/common/cmm_cfg.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/common/cmm_cfg.c	2015-05-18 18:41:17.924248962 +0800
++++ mt76x2e-p4rev-113843/src/common/cmm_cfg.c	2015-05-18 18:41:17.912248960 +0800
+@@ -344,9 +344,9 @@
+ #endif /* MT76x2 */
+ 
+ 	if (wmode_band_equal(pAd->CommonCfg.PhyMode, wmode) == TRUE)
+-		DBGPRINT(RT_DEBUG_OFF, ("wmode_band_equal(): Band Equal!\n"));
++		DBGPRINT(RT_DEBUG_WARN, ("wmode_band_equal(): Band Equal!\n"));
+ 	else
+-		DBGPRINT(RT_DEBUG_OFF, ("wmode_band_equal(): Band Not Equal!\n"));
++		DBGPRINT(RT_DEBUG_ERROR, ("wmode_band_equal(): Band Not Equal!\n"));
+ 	
+ 	pAd->CommonCfg.PhyMode = wmode;
+ 	pAd->CommonCfg.cfg_wmode = wmode;
+Index: mt76x2e-p4rev-113843/src/common/cmm_mac_pci.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/common/cmm_mac_pci.c	2015-05-18 18:41:17.924248962 +0800
++++ mt76x2e-p4rev-113843/src/common/cmm_mac_pci.c	2015-05-18 18:41:17.912248960 +0800
+@@ -358,7 +358,8 @@
+ 		pRxRing = &pAd->RxRing[num];
+ 
+ 		NdisZeroMemory(pDescRing->AllocVa, pDescRing->AllocSize);
+-		DBGPRINT(RT_DEBUG_OFF,  ("RX[%d] DESC %p size = %ld\n", 
++
++		DBGPRINT(RT_DEBUG_WARN,("RX[%d] DESC %p size = %ld\n", 
+ 					num, pDescRing->AllocVa, pDescRing->AllocSize));
+ 
+ 		/* Save PA & VA for further operation */
+Index: mt76x2e-p4rev-113843/src/common/rtmp_init.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/common/rtmp_init.c	2015-05-18 18:41:17.924248962 +0800
++++ mt76x2e-p4rev-113843/src/common/rtmp_init.c	2015-05-18 18:41:17.912248960 +0800
+@@ -464,7 +464,7 @@
+ 	{
+ 		RT28xx_EEPROM_READ16(pAd, EEPROM_COUNTRY_REGION, value);	/* Country Region*/
+ 		pAd->EEPROMDefaultValue[EEPROM_COUNTRY_REG_OFFSET] = value;
+-		DBGPRINT(RT_DEBUG_OFF, ("Country Region from e2p = %x\n", value));
++		DBGPRINT(RT_DEBUG_WARN, ("Country Region from e2p = %x\n", value));
+ 	}
+ 
+ 	for(i = 0; i < 8; i++)
+Index: mt76x2e-p4rev-113843/src/mac/ral_nmac.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/mac/ral_nmac.c	2015-05-18 18:41:17.924248962 +0800
++++ mt76x2e-p4rev-113843/src/mac/ral_nmac.c	2015-05-18 18:41:17.912248960 +0800
+@@ -341,7 +341,7 @@
+ 
+ 
+ 	RTMP_IO_FORCE_READ32(pAd, WLAN_FUN_CTRL, &reg);
+-	DBGPRINT(RT_DEBUG_OFF, ("==>%s(): OnOff:%d, Reset= %d, pAd->WlanFunCtrl:0x%x, Reg-WlanFunCtrl=0x%x\n",
++	DBGPRINT(RT_DEBUG_ERROR, ("==>%s(): OnOff:%d, Reset= %d, pAd->WlanFunCtrl:0x%x, Reg-WlanFunCtrl=0x%x\n",
+ 				__FUNCTION__, bOn, bResetWLAN, pAd->WlanFunCtrl.word, reg));
+ 
+ 	if (bResetWLAN == TRUE)
+Index: mt76x2e-p4rev-113843/src/mcu/mcu_and.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/mcu/mcu_and.c	2015-05-18 18:41:17.924248962 +0800
++++ mt76x2e-p4rev-113843/src/mcu/mcu_and.c	2015-05-18 18:41:38.152248557 +0800
+@@ -99,49 +99,49 @@
+ 	}
+ 
+ 	/* get rom patch information */
+-	DBGPRINT(RT_DEBUG_OFF, ("build time = \n")); 
++	DBGPRINT(RT_DEBUG_WARN, ("build time = \n")); 
+ 	
+ 	for (loop = 0; loop < 16; loop++)
+-		DBGPRINT(RT_DEBUG_OFF, ("%c", *(cap->rom_patch + loop)));
++		DBGPRINT(RT_DEBUG_WARN, ("%c", *(cap->rom_patch + loop)));
+ 
+ 	if (IS_MT76x2(ad)) {
+ 		if (((strncmp(cap->rom_patch, "20130809", 8) >= 0)) && (MT_REV_GTE(ad, MT76x2, REV_MT76x2E3))) {
+-			DBGPRINT(RT_DEBUG_OFF, ("rom patch for E3 IC\n"));
++			DBGPRINT(RT_DEBUG_WARN, ("rom patch for E3 IC\n"));
+ 
+ 		} else if (((strncmp(cap->rom_patch, "20130809", 8) < 0)) && (MT_REV_LT(ad, MT76x2, REV_MT76x2E3))){
+ 
+-			DBGPRINT(RT_DEBUG_OFF, ("rom patch for E2 IC\n"));
++			DBGPRINT(RT_DEBUG_WARN, ("rom patch for E2 IC\n"));
+ 		} else {
+-			DBGPRINT(RT_DEBUG_OFF, ("rom patch do not match IC version\n"));
++			DBGPRINT(RT_DEBUG_WARN, ("rom patch do not match IC version\n"));
+ 			RTMP_IO_READ32(ad, 0x0, &mac_value);
+-			DBGPRINT(RT_DEBUG_OFF, ("IC version(%x)\n", mac_value));
++			DBGPRINT(RT_DEBUG_WARN, ("IC version(%x)\n", mac_value));
+ 			ret = NDIS_STATUS_FAILURE;
+ 			goto done;
+ 		}
+ 	}
+ 	
+-	DBGPRINT(RT_DEBUG_OFF, ("\n"));
++	DBGPRINT(RT_DEBUG_ERROR, ("\n"));
+ 
+-	DBGPRINT(RT_DEBUG_OFF, ("platform = \n"));
++	DBGPRINT(RT_DEBUG_ERROR, ("platform = \n"));
+ 
+ 	for (loop = 0; loop < 4; loop++)
+-		DBGPRINT(RT_DEBUG_OFF, ("%c", *(cap->rom_patch + 16 + loop)));
++		DBGPRINT(RT_DEBUG_ERROR, ("%c", *(cap->rom_patch + 16 + loop)));
+ 	
+-	DBGPRINT(RT_DEBUG_OFF, ("\n"));
++	DBGPRINT(RT_DEBUG_ERROR, ("\n"));
+ 
+-	DBGPRINT(RT_DEBUG_OFF, ("hw/sw version = \n"));
++	DBGPRINT(RT_DEBUG_ERROR, ("hw/sw version = \n"));
+ 
+ 	for (loop = 0; loop < 4; loop++)
+-		DBGPRINT(RT_DEBUG_OFF, ("%c", *(cap->rom_patch + 20 + loop)));
++		DBGPRINT(RT_DEBUG_ERROR, ("%c", *(cap->rom_patch + 20 + loop)));
+ 	
+-	DBGPRINT(RT_DEBUG_OFF, ("\n"));
++	DBGPRINT(RT_DEBUG_ERROR, ("\n"));
+ 
+-	DBGPRINT(RT_DEBUG_OFF, ("patch version = \n"));
++	DBGPRINT(RT_DEBUG_ERROR, ("patch version = \n"));
+ 
+ 	for (loop = 0; loop < 4; loop++)
+-		DBGPRINT(RT_DEBUG_OFF, ("%c", *(cap->rom_patch + 24 + loop)));
++		DBGPRINT(RT_DEBUG_ERROR, ("%c", *(cap->rom_patch + 24 + loop)));
+ 
+-	DBGPRINT(RT_DEBUG_OFF, ("\n"));
++	DBGPRINT(RT_DEBUG_ERROR, ("\n"));
+ 		
+ 
+ 	RTMP_IO_WRITE32(ad, PCIE_REMAP_BASE4, cap->rom_patch_offset - 10000);
+@@ -401,27 +401,27 @@
+ 
+ 	build_ver = (*(cap->FWImageName + 9) << 8) | (*(cap->FWImageName + 8));
+ 	
+-	DBGPRINT(RT_DEBUG_OFF, ("FW Version:%d.%d.%02d ", (fw_ver & 0xf000) >> 8,
++	DBGPRINT(RT_DEBUG_ERROR, ("FW Version:%d.%d.%02d \n", (fw_ver & 0xf000) >> 8,
+ 						(fw_ver & 0x0f00) >> 8, fw_ver & 0x00ff));
+-	DBGPRINT(RT_DEBUG_OFF, ("Build:%x\n", build_ver));
+-	DBGPRINT(RT_DEBUG_OFF, ("Build Time:"));
++	DBGPRINT(RT_DEBUG_ERROR, ("Build:%x\n", build_ver));
++	DBGPRINT(RT_DEBUG_ERROR, ("Build Time:"));
+ 
+ 	for (loop = 0; loop < 16; loop++)
+-		DBGPRINT(RT_DEBUG_OFF, ("%c", *(cap->FWImageName + 16 + loop)));
++		DBGPRINT(RT_DEBUG_ERROR, ("%c", *(cap->FWImageName + 16 + loop)));
+ 
+-	DBGPRINT(RT_DEBUG_OFF, ("\n"));
++	DBGPRINT(RT_DEBUG_ERROR, ("\n"));
+ 	
+ 	if (IS_MT76x2(ad)) {
+ 		if (((strncmp(cap->FWImageName + 16, "20130811", 8) >= 0)) && (MT_REV_GTE(ad, MT76x2, REV_MT76x2E3))) {
+-			DBGPRINT(RT_DEBUG_OFF, ("fw for E3 IC\n"));
++			DBGPRINT(RT_DEBUG_ERROR, ("fw for E3 IC\n"));
+ 
+ 		} else if (((strncmp(cap->FWImageName + 16, "20130811", 8) < 0)) && (MT_REV_LT(ad, MT76x2, REV_MT76x2E3))){
+ 
+-			DBGPRINT(RT_DEBUG_OFF, ("fw for E2 IC\n"));
++			DBGPRINT(RT_DEBUG_ERROR, ("fw for E2 IC\n"));
+ 		} else {
+-			DBGPRINT(RT_DEBUG_OFF, ("fw do not match IC version\n"));
++			DBGPRINT(RT_DEBUG_ERROR, ("fw do not match IC version\n"));
+ 			RTMP_IO_READ32(ad, 0x0, &mac_value);
+-			DBGPRINT(RT_DEBUG_OFF, ("IC version(%x)\n", mac_value));
++			DBGPRINT(RT_DEBUG_ERROR, ("IC version(%x)\n", mac_value));
+ 			ret = NDIS_STATUS_FAILURE;
+ 			goto done;
+ 		}
+Index: mt76x2e-p4rev-113843/src/ap/ap_cfg.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/ap/ap_cfg.c	2015-05-18 18:41:17.924248962 +0800
++++ mt76x2e-p4rev-113843/src/ap/ap_cfg.c	2015-05-18 18:41:17.916248958 +0800
+@@ -5292,7 +5292,7 @@
+ 		AsicSwitchChannel(pAd, pAd->hw_cfg.cent_ch, FALSE);
+ #endif /* MT76x2 */
+ 
+-	DBGPRINT(RT_DEBUG_TRACE, ("Set_CountryCode_Proc::(bCountryFlag=%d, CountryCode=%s)\n", pAd->CommonCfg.bCountryFlag, pAd->CommonCfg.CountryCode));
++	printk("Set_CountryCode_Proc::(bCountryFlag=%d, CountryCode=%s)\n", pAd->CommonCfg.bCountryFlag, pAd->CommonCfg.CountryCode);
+ 
+ 	return TRUE;
+ }
+@@ -5428,12 +5428,12 @@
+ 		pAd->CommonCfg.bCountryFlag = TRUE;
+ 					
+ 		/* if set country string, driver needs to be reset */
+-		DBGPRINT(RT_DEBUG_TRACE, ("Set_CountryString_Proc::(CountryString=%s CountryRegin=%d CountryCode=%s)\n", 
+-							allCountry[index].pCountryName, pAd->CommonCfg.CountryRegion, pAd->CommonCfg.CountryCode));
++		printk("Set_CountryString_Proc::(CountryString=%s CountryRegin=%d CountryCode=%s)\n", 
++							allCountry[index].pCountryName, pAd->CommonCfg.CountryRegion, pAd->CommonCfg.CountryCode);
+ 	}
+ 	else
+ 	{
+-		DBGPRINT(RT_DEBUG_ERROR, ("Set_CountryString_Proc::Parameters out of range\n"));
++		printk("Set_CountryString_Proc::Parameters out of range\n");
+ 	}
+ 
+ 	return success;
+@@ -7375,31 +7375,31 @@
+ 			fw_ver = (*(cap->FWImageName + 11) << 8) | (*(cap->FWImageName + 10));
+ 			build_ver = (*(cap->FWImageName + 9) << 8) | (*(cap->FWImageName + 8));
+ 			
+-			DBGPRINT(RT_DEBUG_OFF, ("fw version:%d.%d.%02d ", (fw_ver & 0xf000) >> 8,
++			DBGPRINT(RT_DEBUG_OFF, ("fw version:%d.%d.%02d \n", (fw_ver & 0xf000) >> 8,
+ 							(fw_ver & 0x0f00) >> 8, fw_ver & 0x00ff));
+-			DBGPRINT(RT_DEBUG_OFF, ("build:%x\n", build_ver));
+-			DBGPRINT(RT_DEBUG_OFF, ("build time:"));
++			DBGPRINT(RT_DEBUG_WARN, ("build:%x\n", build_ver));
++			DBGPRINT(RT_DEBUG_WARN, ("build time:"));
+ 			
+ 			for (loop = 0; loop < 16; loop++)
+-				DBGPRINT(RT_DEBUG_OFF, ("%c", *(cap->FWImageName + 16 + loop)));
++				DBGPRINT(RT_DEBUG_WARN, ("%c", *(cap->FWImageName + 16 + loop)));
+ 
+-			DBGPRINT(RT_DEBUG_OFF, ("\n"));
++			DBGPRINT(RT_DEBUG_WARN, ("\n"));
+ 		}
+ 
+ 		if (pAd->chipCap.need_load_rom_patch) {
+-			DBGPRINT(RT_DEBUG_OFF, ("rom patch version = \n"));
++			DBGPRINT(RT_DEBUG_WARN, ("rom patch version = \n"));
+ 
+ 			for (loop = 0; loop < 4; loop++)
+-				DBGPRINT(RT_DEBUG_OFF, ("%c", *(cap->rom_patch + 24 + loop)));
++				DBGPRINT(RT_DEBUG_WARN, ("%c", *(cap->rom_patch + 24 + loop)));
+ 
+-			DBGPRINT(RT_DEBUG_OFF, ("\n"));
++			DBGPRINT(RT_DEBUG_WARN, ("\n"));
+ 			
+-			DBGPRINT(RT_DEBUG_OFF, ("build time = \n")); 
++			DBGPRINT(RT_DEBUG_WARN, ("build time = \n")); 
+ 	
+ 			for (loop = 0; loop < 16; loop++)
+-				DBGPRINT(RT_DEBUG_OFF, ("%c", *(cap->rom_patch + loop)));
++				DBGPRINT(RT_DEBUG_WARN, ("%c", *(cap->rom_patch + loop)));
+ 	
+-			DBGPRINT(RT_DEBUG_OFF, ("\n"));
++			DBGPRINT(RT_DEBUG_WARN, ("\n"));
+ 		}
+ 	}
+ #endif /* CONFIG_ANDES_SUPPORT */
+@@ -9833,7 +9833,7 @@
+ 		rxCount = pAd->WlanCounters.ReceivedFragmentCount.QuadPart;
+ 	}
+ 
+-	sprintf(msg+strlen(msg), "Current temperature = %d¢J\n", pChipCap->current_temp);
++	sprintf(msg+strlen(msg), "Current temperature = %d\A2J\n", pChipCap->current_temp);
+ 	sprintf(msg+strlen(msg), "Current thermal value = 0x%08X\n", pChipCap->temp_val);
+     sprintf(msg+strlen(msg), "Tx success                      = %ld\n", txCount);
+ #ifdef ENHANCED_STAT_DISPLAY
+Index: mt76x2e-p4rev-113843/src/common/cmm_info.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/common/cmm_info.c	2015-05-18 18:41:17.924248962 +0800
++++ mt76x2e-p4rev-113843/src/common/cmm_info.c	2015-05-18 18:41:17.920248959 +0800
+@@ -55,31 +55,31 @@
+ 			fw_ver = (*(cap->FWImageName + 11) << 8) | (*(cap->FWImageName + 10));
+ 			build_ver = (*(cap->FWImageName + 9) << 8) | (*(cap->FWImageName + 8));
+ 			
+-			DBGPRINT(RT_DEBUG_OFF, ("fw version:%d.%d.%02d ", (fw_ver & 0xf000) >> 8,
++			DBGPRINT(RT_DEBUG_OFF, ("fw version:%d.%d.%02d \n", (fw_ver & 0xf000) >> 8,
+ 							(fw_ver & 0x0f00) >> 8, fw_ver & 0x00ff));
+-			DBGPRINT(RT_DEBUG_OFF, ("build:%x\n", build_ver));
+-			DBGPRINT(RT_DEBUG_OFF, ("build time:"));
++			DBGPRINT(RT_DEBUG_WARN, ("build:%x\n", build_ver));
++			DBGPRINT(RT_DEBUG_WARN, ("build time:"));
+ 			
+ 			for (loop = 0; loop < 16; loop++)
+-				DBGPRINT(RT_DEBUG_OFF, ("%c", *(cap->FWImageName + 16 + loop)));
++				DBGPRINT(RT_DEBUG_WARN, ("%c", *(cap->FWImageName + 16 + loop)));
+ 
+-			DBGPRINT(RT_DEBUG_OFF, ("\n"));
++			DBGPRINT(RT_DEBUG_WARN, ("\n"));
+ 		}
+ 
+ 		if (pAd->chipCap.need_load_rom_patch) {
+-			DBGPRINT(RT_DEBUG_OFF, ("rom patch version = \n"));
++			DBGPRINT(RT_DEBUG_WARN, ("rom patch version = \n"));
+ 
+ 			for (loop = 0; loop < 4; loop++)
+-				DBGPRINT(RT_DEBUG_OFF, ("%c", *(cap->rom_patch + 24 + loop)));
++				DBGPRINT(RT_DEBUG_WARN, ("%c", *(cap->rom_patch + 24 + loop)));
+ 
+-			DBGPRINT(RT_DEBUG_OFF, ("\n"));
++			DBGPRINT(RT_DEBUG_WARN, ("\n"));
+ 			
+-			DBGPRINT(RT_DEBUG_OFF, ("build time = \n")); 
++			DBGPRINT(RT_DEBUG_WARN,("build time = \n")); 
+ 	
+ 			for (loop = 0; loop < 16; loop++)
+-				DBGPRINT(RT_DEBUG_OFF, ("%c", *(cap->rom_patch + loop)));
++				DBGPRINT(RT_DEBUG_WARN, ("%c", *(cap->rom_patch + loop)));
+ 	
+-			DBGPRINT(RT_DEBUG_OFF, ("\n"));
++			DBGPRINT(RT_DEBUG_WARN, ("\n"));
+ 		}
+ 	}
+ #endif /* CONFIG_ANDES_SUPPORT */

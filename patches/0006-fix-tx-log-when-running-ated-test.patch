@@ -1,0 +1,20 @@
+Index: mt76x2e-p4rev-113843/src/os/linux/rt_rbus_pci_drv.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/os/linux/rt_rbus_pci_drv.c	2014-11-27 16:19:59.000000000 +0800
++++ mt76x2e-p4rev-113843/src/os/linux/rt_rbus_pci_drv.c	2015-04-24 16:50:26.594780037 +0800
+@@ -1008,13 +1008,13 @@
+ 			a packet, such as TX_MGMTCTX_IDX, but MAC finds some fields in
+ 			the transmit buffer descriptor is not correct, ex: all zeros.
+ 		*/
+-		DBGPRINT(RT_DEBUG_ERROR, (">>>TxCoherent<<<\n"));
++		DBGPRINT(RT_DEBUG_WARN, (">>>TxCoherent<<<\n"));
+ 		pAd->tx_coherent_counter++;
+ 	}
+ 
+ 	if (IntSource & RxCoherent)
+ 	{
+-		DBGPRINT(RT_DEBUG_ERROR, (">>>RxCoherent<<<\n"));
++		DBGPRINT(RT_DEBUG_WARN, (">>>RxCoherent<<<\n"));
+ 		pAd->rx_coherent_counter++;
+ 	}
+ 

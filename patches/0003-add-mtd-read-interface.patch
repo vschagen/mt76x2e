@@ -1,0 +1,143 @@
+--- a/build/Makefile
++++ b/build/Makefile
+@@ -48,7 +48,8 @@ cmm_objs := $(RT_WIFI_DIR)/common/crypt_
+             $(RT_WIFI_DIR)/mgmt/mgmt_ht.o\
+             $(RT_WIFI_DIR)/mac/rtmp_mac.o\
+ 			$(RT_WIFI_DIR)/mcu/mcu.o\
+-			$(RT_WIFI_DIR)/phy/rf.o
++			$(RT_WIFI_DIR)/phy/rf.o\
++			$(RT_WIFI_DIR)/mtd/ralink_flash.o
+ 
+ ########################################################
+ # Rate adaptation related files
+--- /dev/null
++++ b/src/mtd/ralink_flash.c
+@@ -0,0 +1,105 @@
++#include <linux/version.h>
++#include <linux/module.h>
++#include <linux/types.h>
++#include <linux/init.h>
++#include <linux/kernel.h>
++#include <linux/err.h>
++
++#include <linux/slab.h>
++#include <asm/io.h>
++#include <linux/mtd/mtd.h>
++#include <linux/mtd/map.h>
++#include <linux/mtd/concat.h>
++#include <linux/mtd/partitions.h>
++#include <asm/addrspace.h>
++#include "ralink_flash.h"
++
++int ra_mtd_read_nm(char *name, loff_t from, size_t len, u_char *buf)
++{
++	int ret;
++	size_t rdlen;
++	struct mtd_info *mtd;
++
++	mtd = get_mtd_device_nm(name);
++	if (IS_ERR(mtd))
++		return (int)mtd;
++#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,36)
++	ret = mtd->read(mtd, from, len, &rdlen, buf);
++#else
++	ret = mtd_read(mtd, from, len, &rdlen, buf);
++#endif
++
++	if (rdlen != len)
++		printk("warning: ra_mtd_read_nm: rdlen is not equal to len\n");
++
++	put_mtd_device(mtd);
++	return ret;
++}
++
++int ra_mtd_write_nm(char *name, loff_t to, size_t len, const u_char *buf)
++{
++	int ret = -1;
++	size_t rdlen, wrlen;
++	struct mtd_info *mtd;
++	struct erase_info ei;
++	u_char *bak = NULL;
++
++	mtd = get_mtd_device_nm(name);
++	if (IS_ERR(mtd))
++		return (int)mtd;
++	if (len > mtd->erasesize) {
++		put_mtd_device(mtd);
++		return -E2BIG;
++	}
++
++	bak = kmalloc(mtd->erasesize, GFP_KERNEL);
++	if (bak == NULL) {
++		put_mtd_device(mtd);
++		return -ENOMEM;
++	}
++
++#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,36)
++	ret = mtd->read(mtd, 0, mtd->erasesize, &rdlen, bak);
++#else
++	ret = mtd_read(mtd, 0, mtd->erasesize, &rdlen, bak);
++#endif
++
++	if (ret != 0) {
++		put_mtd_device(mtd);
++		kfree(bak);
++		return ret;
++	}
++	if (rdlen != mtd->erasesize)
++		printk("warning: ra_mtd_write: rdlen is not equal to erasesize\n");
++
++	memcpy(bak + to, buf, len);
++
++	ei.mtd = mtd;
++	ei.callback = NULL;
++	ei.addr = 0;
++	ei.len = mtd->erasesize;
++	ei.priv = 0;
++#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,36)
++	ret = mtd->erase(mtd, &ei);
++#else
++	ret = mtd_erase(mtd, &ei);
++#endif
++	if (ret != 0) {
++		put_mtd_device(mtd);
++		kfree(bak);
++		return ret;
++	}
++
++#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,36)
++	ret = mtd->write(mtd, 0, mtd->erasesize, &wrlen, bak);
++#else
++	ret = mtd_write(mtd, 0, mtd->erasesize, &wrlen, bak);
++#endif
++
++
++	put_mtd_device(mtd);
++	kfree(bak);
++	return ret;
++}
++
++
+--- /dev/null
++++ b/src/mtd/ralink_flash.h
+@@ -0,0 +1,9 @@
++#ifndef __RALINK_FLASH_H__
++#define __RALINK_FLASH_H__
++
++int ra_mtd_read_nm(char *name, loff_t from, size_t len, u_char *buf);
++int ra_mtd_write_nm(char *name, loff_t to, size_t len, const u_char *buf);
++
++#endif //__RALINK_FLASH_H__
++
++
+--- a/src/os/linux/rt_proc.c
++++ b/src/os/linux/rt_proc.c
+@@ -61,7 +61,7 @@ int wl_proc_exit(void);
+ #endif /* PROCREG_DIR */
+ 
+ #ifdef CONFIG_PROC_FS
+-extern struct proc_dir_entry *procRegDir;
++struct proc_dir_entry *procRegDir;
+ 
+ #ifdef VIDEO_TURBINE_SUPPORT
+ extern BOOLEAN UpdateFromGlobal;

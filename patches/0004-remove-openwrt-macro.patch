@@ -1,0 +1,261 @@
+--- a/build/Makefile
++++ b/build/Makefile
+@@ -1,13 +1,6 @@
+-CONFIG_SUPPORT_OPENWRT=y
+-ifeq ($(CONFIG_SUPPORT_OPENWRT),y)
+ EXTRA_CFLAGS = -I$(src)/../src/include -I$(src)/../src/ate/include
+ DRV_NAME = mt76x2e
+ RT_WIFI_DIR = ../src
+-else
+-EXTRA_CFLAGS = -Idrivers/net/wireless/rlt_wifi/include -Idrivers/net/wireless/rlt_wifi/ate/include
+-DRV_NAME = rlt_wifi
+-RT_WIFI_DIR = ../rlt_wifi
+-endif
+ 
+ ########################################################
+ # Common files
+@@ -648,11 +641,7 @@ endif
+ #
+ # Root 
+ #
+-ifeq ($(CONFIG_SUPPORT_OPENWRT),y)
+ obj-m += $(DRV_NAME).o
+-else
+-obj-$(CONFIG_RLT_AP_SUPPORT) += $(DRV_NAME).o
+-endif
+ 
+ $(DRV_NAME)-objs += $(cmm_objs) $(asic_objs) $(chip_objs) $(rate_objs)\
+                     $(spec_objs) $(func_objs) $(ap_objs) $(os_objs)
+@@ -752,7 +741,6 @@ endif
+ endif
+ 
+ # For OpenWrt compatibility
+-ifeq ($(CONFIG_SUPPORT_OPENWRT),y)
+ EXTRA_CFLAGS += -DCONFIG_RT_FIRST_CARD=$(CONFIG_RT_FIRST_CARD)
+ EXTRA_CFLAGS += -DCONFIG_RT_SECOND_CARD=$(CONFIG_RT_SECOND_CARD)
+ 
+@@ -769,7 +757,6 @@ ifeq ($(CONFIG_FIRST_IF_EEPROM_FLASH),y)
+ EXTRA_CFLAGS += -DCONFIG_RT_FIRST_CARD_EEPROM="\"flash\""
+ endif
+ endif
+-endif
+ 
+ ifeq ($(CONFIG_SECOND_IF_EEPROM_PROM),y)
+ EXTRA_CFLAGS += -DCONFIG_RT_SECOND_CARD_EEPROM="\"prom\""
+--- a/src/common/eeprom.c
++++ b/src/common/eeprom.c
+@@ -38,13 +38,8 @@ struct chip_map RTMP_CHIP_E2P_FILE_TABLE
+ 	{0x3593,	"HMC_RT3593_PCIe_3T3R_V1_3.bin"},
+ 	{0x5392,	"RT5392_PCIe_2T2R_ALC_V1_4.bin"},
+ 	{0x5592,	"RT5592_PCIe_2T2R_V1_7.bin"},
+-#if defined(CONFIG_SUPPORT_OPENWRT)
+ 	{0x7602,    "mt7602e/mt7602e.eeprom.bin"},
+ 	{0x7612,    "mt7612e/mt7612e.eeprom.bin"},
+-#else
+-	{0x7602, "MT7602E_EEPROM.bin"},
+-	{0x7612, "MT7612E_EEPROM.bin"},
+-#endif
+ 	{0x7620,	"MT7620_AP_2T2R-4L_V15.BIN"},
+ 	{0,}
+ };
+--- a/src/include/eeprom.h
++++ b/src/include/eeprom.h
+@@ -76,11 +76,7 @@
+ #endif /* CONFIG_RT2860V2_2850 */
+ 
+ #if defined (CONFIG_RALINK_RT6352)  || defined (CONFIG_RALINK_MT7620)
+-#if defined(CONFIG_SUPPORT_OPENWRT)
+ #define EEPROM_DEFAULT_FILE_PATH                     "/etc/wireless/mt7612e/mt7612e.eeprom.bin"
+-#else
+-#define EEPROM_DEFAULT_FILE_PATH                     "/etc_ro/wlan/MT7620_AP_2T2R-4L_V15.BIN"
+-#endif /* CONFIG_SUPPORT_OPENWRT */
+ #endif /* defined (CONFIG_RALINK_RT6352)  || defined (CONFIG_RALINK_MT7620) */
+ 
+ 
+@@ -135,15 +131,11 @@ static USHORT EE_FLASH_ID_LIST[]={
+ #define BIN_FILE_PATH				"/tmp/RT30xxEEPROM.bin"
+ #endif /* BB_SOC */
+ 
+-#if defined(CONFIG_SUPPORT_OPENWRT)
++
+ #define EEPROM_FILE_DIR			"/etc/wireless/"
+ #define EEPROM_1ST_FILE_DIR		"/etc/wireless/"
+ #define EEPROM_2ND_FILE_DIR		"/etc/wireless/"
+-#else
+-#define EEPROM_FILE_DIR            "/etc_ro/wlan/"
+-#define EEPROM_1ST_FILE_DIR        "/etc_ro/Wireless/iNIC/"
+-#define EEPROM_2ND_FILE_DIR        "/etc_ro/Wireless/iNIC/"
+-#endif /* CONFIG_SUPPORT_OPENWRT */
++
+ 
+ #ifdef RT_BIG_ENDIAN
+ typedef	union _EEPROM_WORD_STRUC {
+--- a/src/include/os/rt_linux.h
++++ b/src/include/os/rt_linux.h
+@@ -122,32 +122,16 @@ typedef struct usb_ctrlrequest devctrlre
+ #ifdef CONFIG_AP_SUPPORT
+ #ifdef RTMP_MAC_PCI
+ #if CONFIG_RT_SECOND_IF_RF_OFFSET == 0x48000
+-#if defined(CONFIG_SUPPORT_OPENWRT)
+ #define AP_PROFILE_PATH			"/etc/wireless/mt7612e/mt7612e.dat"
+-#else
+-#define AP_PROFILE_PATH			"/etc/Wireless/iNIC/iNIC_ap.dat"
+-#endif /* CONFIG_SUPPORT_OPENWRT */
+ #define AP_RTMP_FIRMWARE_FILE_NAME "/etc_ro/Wireless/iNIC/RT2860AP.bin"
+ #ifdef SINGLE_SKU_V2
+-#if defined(CONFIG_SUPPORT_OPENWRT)
+ #define SINGLE_SKU_TABLE_FILE_NAME	"/etc/Wireless/mt7612/SingleSKU.dat"
+-#else
+-#define SINGLE_SKU_TABLE_FILE_NAME	"/etc_ro/Wireless/iNIC/SingleSKU.dat"
+-#endif  /* CONFIG_SUPPORT_OPENWRT */
+ #endif /* SINGLE_SKU_V2 */
+ #else
+-#if defined(CONFIG_SUPPORT_OPENWRT)
+ #define AP_PROFILE_PATH	        "/etc/wireless/mt7612e/mt7612e.dat"
+-#else
+-#define AP_PROFILE_PATH         "/etc/Wireless/RT2860AP/RT2860AP.dat"
+-#endif /* CONFIG_SUPPORT_OPENWRT */
+ #define AP_RTMP_FIRMWARE_FILE_NAME "/etc/Wireless/RT2860AP/RT2860AP.bin"
+ #ifdef SINGLE_SKU_V2
+-#if defined(CONFIG_SUPPORT_OPENWRT)
+ #define SINGLE_SKU_TABLE_FILE_NAME	"/etc/Wireless/mt7602/SingleSKU.dat"
+-#else
+-#define SINGLE_SKU_TABLE_FILE_NAME	"/etc/Wireless/RT2860AP/SingleSKU.dat"
+-#endif  /* CONFIG_SUPPORT_OPENWRT */
+ #endif /* SINGLE_SKU_V2 */
+ #endif
+ 
+--- a/src/include/rtmp_def.h
++++ b/src/include/rtmp_def.h
+@@ -1753,18 +1753,8 @@ enum WIFI_MODE{
+ #define IS_OPMODE_STA(_x)		((_x)->OpMode == OPMODE_STA)
+ 
+ #if defined(ANDROID_SUPPORT) || defined(RT_CFG80211_SUPPORT)
+-#if defined(CONFIG_SUPPORT_OPENWRT)
+ #define INF_MAIN_DEV_NAME       "rai"
+ #define INF_MBSSID_DEV_NAME     "rai"
+-#else
+-#if CONFIG_RTPCI_AP_RF_OFFSET == 0x48000
+-#define INF_MAIN_DEV_NAME		"wlani"
+-#define INF_MBSSID_DEV_NAME		"wlani"
+-#else
+-#define INF_MAIN_DEV_NAME		"wlan"
+-#define INF_MBSSID_DEV_NAME		"wlan"
+-#endif
+-#endif /* CONFIG_SUPPORT_OPENWRT */
+ #else // !ANDROID_SUPPORT || RT_CFG80211_SUPPORT
+ #if CONFIG_RTPCI_AP_RF_OFFSET == 0x48000
+ #define INF_MAIN_DEV_NAME		"rai"
+--- a/src/os/linux/Makefile.rlt_wifi_ap
++++ b/src/os/linux/Makefile.rlt_wifi_ap
+@@ -1,12 +1,6 @@
+-ifeq ($(CONFIG_SUPPORT_OPENWRT),y)
+ EXTRA_CFLAGS = -I$(src)/../src/include -I$(src)/../src/ate/include
+ DRV_NAME = mt76x2e
+ RT_WIFI_DIR = ../src
+-else
+-EXTRA_CFLAGS = -Idrivers/net/wireless/rlt_wifi/include -Idrivers/net/wireless/rlt_wifi/ate/include
+-DRV_NAME = rlt_wifi
+-RT_WIFI_DIR = ../rlt_wifi
+-endif
+ 
+ ########################################################
+ # Common files
+@@ -646,11 +640,7 @@ endif
+ #
+ # Root 
+ #
+-ifeq ($(CONFIG_SUPPORT_OPENWRT),y)
+ obj-m += $(DRV_NAME).o
+-else
+-obj-$(CONFIG_RLT_AP_SUPPORT) += $(DRV_NAME).o
+-endif
+ 
+ $(DRV_NAME)-objs += $(cmm_objs) $(asic_objs) $(chip_objs) $(rate_objs)\
+                     $(spec_objs) $(func_objs) $(ap_objs) $(os_objs)
+@@ -749,8 +739,7 @@ EXTRA_CFLAGS += -DTHERMAL_PROTECT_SUPPOR
+ endif
+ endif
+ 
+-# For OpenWrt compatibility
+-ifeq ($(CONFIG_SUPPORT_OPENWRT),y)
++
+ EXTRA_CFLAGS += -DCONFIG_RT_FIRST_CARD=$(CONFIG_RT_FIRST_CARD)
+ EXTRA_CFLAGS += -DCONFIG_RT_SECOND_CARD=$(CONFIG_RT_SECOND_CARD)
+ 
+@@ -767,7 +756,6 @@ ifeq ($(CONFIG_FIRST_IF_EEPROM_FLASH),y)
+ EXTRA_CFLAGS += -DCONFIG_RT_FIRST_CARD_EEPROM="\"flash\""
+ endif
+ endif
+-endif
+ 
+ ifeq ($(CONFIG_SECOND_IF_EEPROM_PROM),y)
+ EXTRA_CFLAGS += -DCONFIG_RT_SECOND_CARD_EEPROM="\"prom\""
+--- a/src/os/linux/rt_linux.c
++++ b/src/os/linux/rt_linux.c
+@@ -38,13 +38,8 @@
+ #include <linux/rtnetlink.h>
+ 
+ #if defined(CONFIG_RA_HW_NAT) || defined(CONFIG_RA_HW_NAT_MODULE)
+-#if defined(CONFIG_SUPPORT_OPENWRT)
+ #include "../../../linux-kernel/net/nat/hw_nat/ra_nat.h"
+ #include "../../../linux-kernel/net/nat/hw_nat/frame_engine.h"
+-#else
+-#include "../../../../../../net/nat/hw_nat/ra_nat.h"
+-#include "../../../../../../net/nat/hw_nat/frame_engine.h"
+-#endif /* CONFIG_SUPPORT_OPENWRT */
+ #endif
+ 
+ /* TODO */
+--- a/src/os/linux/rt_profile.c
++++ b/src/os/linux/rt_profile.c
+@@ -27,13 +27,8 @@
+ #include "default_profile.h"
+ 
+ #if defined(CONFIG_RA_HW_NAT) || defined(CONFIG_RA_HW_NAT_MODULE)
+-#if defined(CONFIG_SUPPORT_OPENWRT)
+ #include "../../../linux-kernel/net/nat/hw_nat/ra_nat.h"
+ #include "../../../linux-kernel/net/nat/hw_nat/frame_engine.h"
+-#else
+-#include "../../../../../../net/nat/hw_nat/ra_nat.h"
+-#include "../../../../../../net/nat/hw_nat/frame_engine.h"
+-#endif /* CONFIG_SUPPORT_OPENWRT */
+ #endif
+ 
+ struct dev_type_name_map{
+@@ -43,14 +38,9 @@ struct dev_type_name_map{
+ 
+ 
+ #if defined(ANDROID_SUPPORT) || defined(RT_CFG80211_SUPPORT)
+-#if defined(CONFIG_SUPPORT_OPENWRT)
+ #define SECOND_INF_MAIN_DEV_NAME       "rai"
+ #define SECOND_INF_MBSSID_DEV_NAME "rai"
+ #else
+-#define SECOND_INF_MAIN_DEV_NAME		"wlani"
+-#define SECOND_INF_MBSSID_DEV_NAME	"wlani"
+-#endif /* CONFIG_SUPPORT_OPENWRT */
+-#else
+ #define SECOND_INF_MAIN_DEV_NAME		"rai"
+ #define SECOND_INF_MBSSID_DEV_NAME	"rai"
+ #endif /*#if defined(ANDROID_SUPPORT) || defined(RT_CFG80211_SUPPORT)*/
+@@ -66,20 +56,12 @@ struct dev_type_name_map{
+ #define def_to_str(s)    #s
+ 
+ #define FIRST_EEPROM_FILE_PATH	"/etc_ro/Wireless/RT2860/"
+-#if defined(CONFIG_SUPPORT_OPENWRT)
+ #define FIRST_AP_PROFILE_PATH		"/etc/wireless/mt7602e/mt7602e.dat"
+-#else
+-#define FIRST_AP_PROFILE_PATH      "/etc/Wireless/RT2860/RT2860.dat"
+-#endif /* CONFIG_SUPPORT_OPENWRT */
+ #define FIRST_STA_PROFILE_PATH		"/etc/Wireless/RT2860/RT2860.dat"
+ #define FIRST_CHIP_ID	xdef_to_str(CONFIG_RT_FIRST_CARD)
+ 
+ #define SECOND_EEPROM_FILE_PATH	"/etc_ro/Wireless/iNIC/"
+-#if defined(CONFIG_SUPPORT_OPENWRT)
+ #define SECOND_AP_PROFILE_PATH	"/etc/wireless/mt7612e/mt7612e.dat"
+-#else
+-#define SECOND_AP_PROFILE_PATH "/etc/Wireless/iNIC/iNIC_ap.dat"
+-#endif /* CONFIG_SUPPORT_OPENWRT */
+ #define SECOND_CHIP_ID	xdef_to_str(CONFIG_RT_SECOND_CARD)
+ 
+ static struct dev_type_name_map prefix_map[] =

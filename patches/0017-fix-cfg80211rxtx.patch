@@ -1,0 +1,151 @@
+Index: mt76x2e-p4rev-113843/src/os/linux/cfg80211/cfg80211_tx.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/os/linux/cfg80211/cfg80211_tx.c
++++ mt76x2e-p4rev-113843/src/os/linux/cfg80211/cfg80211_tx.c
+@@ -50,42 +50,13 @@ BOOLEAN CFG80211_SyncPacketWmmIe(RTMP_AD
+ {
+ 	const UINT WFA_OUI = 0x0050F2;
+ 	const UCHAR WMM_OUI_TYPE = 0x2;
+-	UCHAR *wmm_ie = NULL;
+-	return;//????
+-	//hex_dump("probe_rsp_in:", pData, dataLen);
+-	wmm_ie = cfg80211_find_vendor_ie(WFA_OUI, WMM_OUI_TYPE, pData, dataLen);
+-
+-	if (wmm_ie != NULL)
+-        {
+-#ifdef UAPSD_SUPPORT
+-                if (pAd->ApCfg.MBSSID[0].UapsdInfo.bAPSDCapable == TRUE)
+-                {
+-                        wmm_ie[8] |= 0x80;
+-                }
+-#endif /* UAPSD_SUPPORT */
+-
+-
+-                UINT i = QID_AC_BE;
+-                /* WMM: sync from driver's EDCA paramter */
+-                for (i = QID_AC_BE; i <= QID_AC_VO; i++)
+-                {
+-
+-                        wmm_ie[10+ (i*4)] = (i << 5) +                                     /* b5-6 is ACI */
+-                                            ((UCHAR)pAd->ApCfg.BssEdcaParm.bACM[i] << 4) + /* b4 is ACM */
+-                                            (pAd->ApCfg.BssEdcaParm.Aifsn[i] & 0x0f);      /* b0-3 is AIFSN */
+-
+-                        wmm_ie[11+ (i*4)] = (pAd->ApCfg.BssEdcaParm.Cwmax[i] << 4) +       /* b5-8 is CWMAX */
+-                                            (pAd->ApCfg.BssEdcaParm.Cwmin[i] & 0x0f);      /* b0-3 is CWMIN */
+-                        wmm_ie[12+ (i*4)] = (UCHAR)(pAd->ApCfg.BssEdcaParm.Txop[i] & 0xff);/* low byte of TXOP */
+-                        wmm_ie[13+ (i*4)] = (UCHAR)(pAd->ApCfg.BssEdcaParm.Txop[i] >> 8);  /* high byte of TXOP */
+-                }
+ 
+-		return TRUE;
+-        }
++	UCHAR *wmm_ie = NULL;
+ 
+-	return FALSE;	
++	return 0;
+ }
+-VOID CFG80211_ParseBeaconIE(RTMP_ADAPTER *pAd, MULTISSID_STRUCT *pMbss, struct wifi_dev *wdev,UCHAR *wpa_ie,UCHAR *rsn_ie)
++
++VOID CFG80211_ParseBeaconIE(RTMP_ADAPTER *pAd, MULTISSID_STRUCT *pMbss, struct wifi_dev *wdev,const UCHAR *wpa_ie, const UCHAR *rsn_ie)
+ {
+ 	PEID_STRUCT 		 pEid;
+ 	PUCHAR				pTmp;
+@@ -99,6 +70,7 @@ VOID CFG80211_ParseBeaconIE(RTMP_ADAPTER
+ 	BOOLEAN bWPA2 = FALSE;
+ 	BOOLEAN bMix = FALSE;
+ 
++
+ 		/* Security */
+ 	PairCipher	 = Ndis802_11WEPDisabled;
+ 	PairCipherAux = Ndis802_11WEPDisabled;
+@@ -113,8 +85,8 @@ VOID CFG80211_ParseBeaconIE(RTMP_ADAPTER
+ 	
+ 	 if ((wpa_ie != NULL)) //wpapsk/tkipaes case
+ 	{
+-		pEid = wpa_ie;
+-		pTmp = pEid;
++		pEid = (UCHAR) wpa_ie;
++		pTmp = (PUCHAR) pEid;
+ 		if (NdisEqualMemory(pEid->Octet, WPA_OUI, 4))
+ 		{
+ 			wdev->AuthMode = Ndis802_11AuthModeOpen;
+@@ -149,7 +121,8 @@ VOID CFG80211_ParseBeaconIE(RTMP_ADAPTER
+ 				/*Count = *(PUSHORT) pTmp;				*/
+ 				Count = (pTmp[1]<<8) + pTmp[0];
+ 				pTmp   += sizeof(USHORT);
+-				/* Parsing all unicast cipher suite*/
++
++				/* Parsing all unicast cipher suite*/
+ 				while (Count > 0)
+ 				{
+ 					/* Skip OUI*/
+@@ -223,8 +196,8 @@ VOID CFG80211_ParseBeaconIE(RTMP_ADAPTER
+ 		PRSN_IE_HEADER_STRUCT			pRsnHeader;
+ 		PCIPHER_SUITE_STRUCT			pCipher;
+ 
+-		pEid = rsn_ie;
+-		pTmp = pEid;
++		pEid = (UCHAR) rsn_ie;
++		pTmp = (PUCHAR) pEid;
+ 		pRsnHeader = (PRSN_IE_HEADER_STRUCT) pTmp;
+ 				
+ 				/* 0. Version must be 1*/
+@@ -390,8 +363,7 @@ VOID CFG80211_ParseBeaconIE(RTMP_ADAPTER
+ 
+ #endif /* CONFIG_AP_SUPPORT */
+ 
+-static
+-PCFG80211_TX_PACKET CFG80211_TxMgmtFrameSearch(RTMP_ADAPTER *pAd, USHORT Sequence)
++static PCFG80211_TX_PACKET CFG80211_TxMgmtFrameSearch(RTMP_ADAPTER *pAd, USHORT Sequence)
+ {
+ 	PLIST_HEADER  pPacketList = &pAd->cfg80211_ctrl.cfg80211TxPacketList;
+ 	PCFG80211_TX_PACKET pTxPkt = NULL;
+@@ -460,7 +432,7 @@ INT CFG80211_SendMgmtFrame(RTMP_ADAPTER
+ 			MiniportMMRequest(pAd, 0, pData, Data);
+ 		}
+ 	}
+-
++    return 0;
+ }
+ 
+ VOID CFG80211_SendMgmtFrameDone(RTMP_ADAPTER *pAd, USHORT Sequence)
+@@ -484,4 +456,4 @@ VOID CFG80211_SendMgmtFrameDone(RTMP_ADA
+ }
+ 
+ #endif /* RT_CFG80211_SUPPORT */
+-
++
+Index: mt76x2e-p4rev-113843/src/os/linux/cfg80211/cfg80211_rx.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/os/linux/cfg80211/cfg80211_rx.c
++++ mt76x2e-p4rev-113843/src/os/linux/cfg80211/cfg80211_rx.c
+@@ -86,7 +86,7 @@ BOOLEAN CFG80211_CheckActionFrameType(
+ 		}
+ 		else if (ieee80211_is_deauth(mgmt->frame_control))
+ 		{
+-			DBGPRINT(RT_DEBUG_ERROR, ("CFG80211_PKT: %s Deauth Frame\n", preStr, pAd->LatchRfRegs.Channel));
++			DBGPRINT(RT_DEBUG_ERROR, ("CFG80211_PKT: %s Deauth Frame %d\n", preStr, pAd->LatchRfRegs.Channel));
+ 		}
+ 		else if (ieee80211_is_action(mgmt->frame_control)) 
+ 		{
+@@ -202,7 +202,7 @@ BOOLEAN CFG80211_HandleP2pMgmtFrame(RTMP
+ 
+ 	if ((pHeader->FC.SubType == SUBTYPE_PROBE_REQ) ||
+ 	 	 ((pHeader->FC.SubType == SUBTYPE_ACTION) && 
+-	 	   CFG80211_CheckActionFrameType(pAd, "RX", pHeader, pRxWI->RXWI_N.MPDUtotalByteCnt)))
++	 	   CFG80211_CheckActionFrameType(pAd, "RX", (PUCHAR) pHeader, pRxWI->RXWI_N.MPDUtotalByteCnt)))
+ 		{
+ 			MAP_CHANNEL_ID_TO_KHZ(pAd->LatchRfRegs.Channel, freq);
+ 			freq /= 1000;
+Index: mt76x2e-p4rev-113843/src/include/cfg80211extr.h
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/include/cfg80211extr.h
++++ mt76x2e-p4rev-113843/src/include/cfg80211extr.h
+@@ -361,7 +361,7 @@ BOOLEAN CFG80211_P2pHandleNoAAttri(
+ 
+ #endif /* RT_CFG80211_P2P_SUPPORT */
+ #ifdef CONFIG_AP_SUPPORT
+-VOID CFG80211_ParseBeaconIE(RTMP_ADAPTER *pAd, MULTISSID_STRUCT *pMbss, struct wifi_dev *wdev,UCHAR *wpa_ie,UCHAR *rsn_ie);
++VOID CFG80211_ParseBeaconIE(RTMP_ADAPTER *pAd, MULTISSID_STRUCT *pMbss, struct wifi_dev *wdev, const UCHAR *wpa_ie, const UCHAR *rsn_ie);
+ #endif
+ 
+ //--------------------------------

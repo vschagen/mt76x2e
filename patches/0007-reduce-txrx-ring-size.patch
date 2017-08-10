@@ -1,0 +1,15 @@
+Index: mt76x2e-p4rev-113843/src/include/os/rt_linux_cmm.h
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/include/os/rt_linux_cmm.h	2014-11-27 16:20:00.000000000 +0800
++++ mt76x2e-p4rev-113843/src/include/os/rt_linux_cmm.h	2015-05-15 13:51:21.709980217 +0800
+@@ -438,8 +438,8 @@
+ #define RX_RING_SIZE            64
+ #else
+ #ifdef DOT11_VHT_AC
+-#define TX_RING_SIZE            256 /* 64 */ /*64 */
+-#define RX_RING_SIZE            256 /*64 */
++#define TX_RING_SIZE            64 /* 64 */ /*64 */
++#define RX_RING_SIZE            64 /*64 */
+ #else
+ #define TX_RING_SIZE            64 /*64 */
+ #define RX_RING_SIZE            128 /*64 */

@@ -1,0 +1,7 @@
+--- a/build/Makefile
++++ b/build/Makefile
+@@ -1,3 +1,4 @@
++CONFIG_SUPPORT_OPENWRT=y
+ ifeq ($(CONFIG_SUPPORT_OPENWRT),y)
+ EXTRA_CFLAGS = -I$(src)/../src/include -I$(src)/../src/ate/include
+ DRV_NAME = mt76x2e

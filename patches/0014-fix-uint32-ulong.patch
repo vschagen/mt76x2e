@@ -1,0 +1,343 @@
+Index: mt76x2e-p4rev-113843/src/common/cmm_cfg.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/common/cmm_cfg.c
++++ mt76x2e-p4rev-113843/src/common/cmm_cfg.c
+@@ -1316,7 +1316,7 @@ INT RTMP_COM_IoctlHandle(
+ 			RtmpDrvRateGet(pAd, HtPhyMode.field.MODE, GI,
+ 							BW, HtPhyMode.field.MCS,
+ 							pAd->Antenna.field.TxPath,
+-							(UINT32 *)&pRate->BitRate);
++							(ULONG *)&pRate->BitRate);
+ 		}
+ 			break;
+ #endif /* CONFIG_AP_SUPPORT */
+Index: mt76x2e-p4rev-113843/src/include/ap_cfg.h
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/include/ap_cfg.h
++++ mt76x2e-p4rev-113843/src/include/ap_cfg.h
+@@ -88,7 +88,7 @@ VOID RtmpDrvRateGet(
+ 	IN	UINT8					BW,
+ 	IN	UINT8					MCS,
+ 	IN  UINT8                   Antena,
+-	OUT	UINT32					*pRate);
++	OUT	ULONG					*pRate);
+ 
+ #ifdef WSC_AP_SUPPORT
+ VOID RTMPIoctlWscProfile(
+Index: mt76x2e-p4rev-113843/src/include/rt_os_util.h
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/include/rt_os_util.h
++++ mt76x2e-p4rev-113843/src/include/rt_os_util.h
+@@ -554,7 +554,7 @@ VOID RtmpDrvRateGet(
+ 	IN UINT8 BW,
+ 	IN UINT8 MCS,
+ 	IN UINT8 Antenna,
+-	OUT UINT32 *pRate);
++	OUT ULONG *pRate);
+ 
+ char * rtstrchr(const char * s, int c);
+ 
+Index: mt76x2e-p4rev-113843/src/common/rt_os_util.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/common/rt_os_util.c
++++ mt76x2e-p4rev-113843/src/common/rt_os_util.c
+@@ -30,7 +30,7 @@ VOID RtmpDrvRateGet(
+ 	IN	UINT8					BW,
+ 	IN	UINT8					MCS,
+ 	IN      UINT8                                   Antenna,
+-	OUT	UINT32					*pRate)
++	OUT	ULONG					*pRate)
+ {
+ 	UINT32 MCS_1NSS = (UINT32) MCS;
+ 	*pRate = 0;
+Index: mt76x2e-p4rev-113843/src/mcu/mcu.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/mcu/mcu.c
++++ mt76x2e-p4rev-113843/src/mcu/mcu.c
+@@ -112,7 +112,7 @@ VOID ChipOpsMCUHook(PRTMP_ADAPTER pAd, e
+ 			//pChipOps->sendCommandToMcu = andes_send_cmd_msg;
+ 			pChipOps->MCUCtrlInit = andes_ctrl_init;
+ 			pChipOps->MCUCtrlExit = andes_ctrl_exit;
+-			pChipOps->Calibration = andes_calibration;
++			pChipOps->Calibration = (VOID*) andes_calibration;
+ 			pChipOps->BurstWrite =  andes_burst_write;
+ 			pChipOps->BurstRead = andes_burst_read;
+ 			pChipOps->RandomRead = andes_random_read;
+Index: mt76x2e-p4rev-113843/src/chips/mt76x2.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/chips/mt76x2.c
++++ mt76x2e-p4rev-113843/src/chips/mt76x2.c
+@@ -619,9 +619,9 @@ static VOID mt76x2_bbp_adjust(RTMP_ADAPT
+ #endif /* DOT11_N_SUPPORT */
+ }
+ 
+-char get_chl_grp(u8 channel)
++uint8_t get_chl_grp(uint8_t channel)
+ {
+-	char chl_grp = A_BAND_GRP0_CHL;
++	uint8_t chl_grp = A_BAND_GRP0_CHL;
+ 
+ 	if (channel >= 184 && channel <= 196)
+ 		chl_grp = A_BAND_GRP0_CHL;
+@@ -641,9 +641,9 @@ char get_chl_grp(u8 channel)
+ 	return chl_grp;
+ }
+ 
+-char get_low_mid_hi_index(u8 channel)
++uint8_t get_low_mid_hi_index(uint8_t channel)
+ {
+-	char index = G_BAND_LOW;
++	uint8_t index = G_BAND_LOW;
+ 
+ 	if (channel <= 14) {
+ 		if (channel >= 1 && channel <= 5)
+@@ -686,7 +686,7 @@ char get_low_mid_hi_index(u8 channel)
+ 	return index;
+ }
+ 
+-void mt76x2_adjust_per_rate_pwr_delta(RTMP_ADAPTER *ad, u8 channel, char delta_pwr)
++void mt76x2_adjust_per_rate_pwr_delta(RTMP_ADAPTER *ad, uint8_t channel, char delta_pwr)
+ {
+ 	u32 value;
+ 	RTMP_CHIP_CAP *cap = &ad->chipCap;
+@@ -835,7 +835,7 @@ void mt76x2_adjust_per_rate_pwr_delta(RT
+ 	RTMP_IO_WRITE32(ad, TX_PWR_CFG_9, value);
+ }
+ 
+-void mt76x2_tx_pwr_gain(RTMP_ADAPTER *ad, u8 channel, u8 bw)
++void mt76x2_tx_pwr_gain(RTMP_ADAPTER *ad, uint8_t channel, uint8_t bw)
+ {
+ 	RTMP_CHIP_CAP *cap = &ad->chipCap;
+ 	CHAR tx_0_pwr, tx_1_pwr;
+@@ -905,7 +905,7 @@ void mt76x2_tx_pwr_gain(RTMP_ADAPTER *ad
+ #define EXT_CH_ABOVE 0X01
+ #define EXT_CH_BELOW 0x03
+ 
+-static void mt76x2_switch_channel(RTMP_ADAPTER *ad, u8 channel, BOOLEAN scan)
++static void mt76x2_switch_channel(RTMP_ADAPTER *ad, uint8_t channel, BOOLEAN scan)
+ {
+ 	RTMP_CHIP_CAP *cap = &ad->chipCap;
+ 	unsigned int latch_band, band, bw, tx_rx_setting;
+@@ -1255,7 +1255,7 @@ static void mt76x2_switch_channel(RTMP_A
+ 			bbp_ch_idx));
+ }
+ 
+-void mt76x2_external_pa_rf_dac_control(RTMP_ADAPTER *ad, u8 channel)
++void mt76x2_external_pa_rf_dac_control(RTMP_ADAPTER *ad, uint8_t channel)
+ {
+ 	if (isExternalPAMode(ad, channel)) {
+ 		if (!strncmp((PSTRING)ad->CommonCfg.CountryCode, "US", 2) 
+@@ -1268,7 +1268,7 @@ void mt76x2_external_pa_rf_dac_control(R
+ 	}
+ }
+ 
+-void mt76x2_tssi_calibration(RTMP_ADAPTER *ad, u8 channel)
++void mt76x2_tssi_calibration(RTMP_ADAPTER *ad, uint8_t channel)
+ {
+ 	/* TSSI Clibration */
+ 	if (ad->chipCap.tssi_enable) {
+@@ -1295,7 +1295,7 @@ void mt76x2_tssi_calibration(RTMP_ADAPTE
+ 	}
+ }
+ 
+-void mt76x2_tssi_compensation(RTMP_ADAPTER *ad, u8 channel)
++void mt76x2_tssi_compensation(RTMP_ADAPTER *ad, uint8_t channel)
+ {
+ 	RTMP_CHIP_CAP *cap = &ad->chipCap;
+ 	ANDES_CALIBRATION_PARAM param;
+@@ -1409,7 +1409,7 @@ done:
+ 
+ }
+ 
+-void mt76x2_calibration(RTMP_ADAPTER *ad, u8 channel)
++void mt76x2_calibration(RTMP_ADAPTER *ad, uint8_t channel)
+ {
+ 	UINT32 value, value1, restore_value, loop = 0;
+ 
+@@ -1872,7 +1872,7 @@ void mt76x2_get_agc_gain(RTMP_ADAPTER *a
+ 	ad->CommonCfg.lna_vga_ctl.bDyncVgaEnable = TRUE;
+ }
+ 
+-int mt76x2_reinit_agc_gain(RTMP_ADAPTER *ad, u8 channel)
++int mt76x2_reinit_agc_gain(RTMP_ADAPTER *ad, uint8_t channel)
+ {
+ 	UINT32 value0, value1;
+ 	CHAR agc_vga0, agc_vga1;
+@@ -1937,7 +1937,7 @@ int mt76x2_reinit_agc_gain(RTMP_ADAPTER
+ 	return 0;
+ }
+ 
+-int mt76x2_reinit_hi_lna_gain(RTMP_ADAPTER *ad, u8 channel)
++int mt76x2_reinit_hi_lna_gain(RTMP_ADAPTER *ad, uint8_t channel)
+ {
+ 	UINT32 value0, value1;
+ 	CHAR hi_lna0, hi_lna1;
+@@ -2824,7 +2824,7 @@ static int mt76x2_get_tx_pwr_info(RTMP_A
+ 	cap->PAType= GET_PA_TYPE(value);
+ }
+ 
+-static u8 mt76x2_txpwr_chlist[] = {
++static uint8_t mt76x2_txpwr_chlist[] = {
+ 	1, 2,3,4,5,6,7,8,9,10,11,12,13,14,
+ 	36,38,40,44,46,48,52,54,56,60,62,64,
+ 	100,102,104,108,110,112,116,118,120,124,126,128,132,134,136,140,
+@@ -3442,7 +3442,7 @@ static void mt76x2_antenna_default_reset
+ 										 EEPROM_ANTENNA_STRUC *pAntenna)
+ {
+ 	pAntenna->word = 0;
+-	pAntenna->field.RfIcType = RFIC_7662;
++	pAntenna->field.RfIcType = (uint8_t) RFIC_7662;
+ 	pAntenna->field.TxPath = 2;
+ 	pAntenna->field.RxPath = 2;
+ }
+@@ -3679,7 +3679,7 @@ void mt76x2_temp_tx_alc(RTMP_ADAPTER *ad
+ #endif /* RTMP_TEMPERATURE_TX_ALC */
+ 
+ #ifdef SINGLE_SKU_V2
+-void mt76x2_single_sku(RTMP_ADAPTER *ad, u8 channel)
++void mt76x2_single_sku(RTMP_ADAPTER *ad, uint8_t channel)
+ {
+ 	CHAR sku_base_pwr = 0, ch_pwr_adj = 0;
+ 	CHAR delta_power = 0;
+@@ -4059,7 +4059,7 @@ void mt76x2_make_up_rate_pwr_table(RTMP_
+ 	DBGPRINT(RT_DEBUG_TRACE, ("rate_pwr_table.MCS32.MCS_Power = %d\n", ad->chipCap.rate_pwr_table.MCS32.mcs_pwr));
+ }
+ 
+-UCHAR mt76x2_get_sku_channel_base_pwr(RTMP_ADAPTER *ad, u8 channel)
++UCHAR mt76x2_get_sku_channel_base_pwr(RTMP_ADAPTER *ad, uint8_t channel)
+ {
+ 	CH_POWER *ch, *ch_temp;
+ 	UCHAR start_ch = 0, base_pwr = ad->DefaultTargetPwr;
+@@ -4315,7 +4315,7 @@ void mt76x2_update_per_rate_pwr(RTMP_ADA
+ 	DBGPRINT(RT_DEBUG_TRACE, ("%s - 0x%x: 0x%08X\n", __FUNCTION__, TX_PWR_CFG_9, data));
+ }
+ 
+-UCHAR mt76x2_update_sku_pwr(RTMP_ADAPTER *ad, u8 channel)
++UCHAR mt76x2_update_sku_pwr(RTMP_ADAPTER *ad, uint8_t channel)
+ {
+ 	CH_POWER *ch, *ch_temp;
+ 	INT32 i = 0, j = 0, pwr_delta = 0;
+@@ -4827,8 +4827,8 @@ static const RTMP_CHIP_OP MT76x2_ChipOp
+ 	.RxSensitivityTuning = NULL,
+ 	.DisableTxRx = RT65xxDisableTxRx,
+ #ifdef RTMP_PCI_SUPPORT
+-	.AsicRadioOn = RT28xxPciAsicRadioOn,
+-	.AsicRadioOff = RT28xxPciAsicRadioOff,
++	.AsicRadioOn = (void *) RT28xxPciAsicRadioOn,
++	.AsicRadioOff = (void *) RT28xxPciAsicRadioOff,
+ #endif
+ #ifdef CAL_FREE_IC_SUPPORT
+ 	.is_cal_free_ic = mt76x2_is_cal_free_ic,
+@@ -5072,7 +5072,7 @@ void mt76x2_pwrOn(RTMP_ADAPTER *pAd)
+ }
+ 
+ 
+-int mt76x2_set_ed_cca(RTMP_ADAPTER *ad, u8 enable)
++int mt76x2_set_ed_cca(RTMP_ADAPTER *ad, uint8_t enable)
+ {
+         UINT32 mac_val;
+         UINT32 bbp_val;
+Index: mt76x2e-p4rev-113843/src/include/chip/mt76x2.h
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/include/chip/mt76x2.h
++++ mt76x2e-p4rev-113843/src/include/chip/mt76x2.h
+@@ -10,24 +10,24 @@ struct _RTMP_ADAPTER;
+ #define MAC_RF_BANK 7
+ 
+ void mt76x2_init(struct _RTMP_ADAPTER *ad);
+-void mt76x2_adjust_per_rate_pwr_delta(struct _RTMP_ADAPTER *ad, u8 channel, char delta_pwr);
++void mt76x2_adjust_per_rate_pwr_delta(struct _RTMP_ADAPTER *ad, uint8_t channel, char delta_pwr);
+ void mt76x2_get_tx_pwr_per_rate(struct _RTMP_ADAPTER *ad);
+ void mt76x2_antenna_sel_ctl(struct _RTMP_ADAPTER *ad);
+ int mt76x2_read_chl_pwr(struct _RTMP_ADAPTER *ad);
+ void mt76x2_pwrOn(struct _RTMP_ADAPTER *ad);
+-void mt76x2_calibration(struct _RTMP_ADAPTER *ad, u8 channel);
+-void mt76x2_external_pa_rf_dac_control(struct _RTMP_ADAPTER *ad, u8 channel);
+-void mt76x2_tssi_calibration(struct _RTMP_ADAPTER *ad, u8 channel);
+-void mt76x2_tssi_compensation(struct _RTMP_ADAPTER *ad, u8 channel);
+-int mt76x2_set_ed_cca(struct _RTMP_ADAPTER *ad, u8 enable);
+-int mt76x2_reinit_agc_gain(struct _RTMP_ADAPTER *ad, u8 channel);
+-int mt76x2_reinit_hi_lna_gain(struct _RTMP_ADAPTER *ad, u8 channel);
++void mt76x2_calibration(struct _RTMP_ADAPTER *ad, uint8_t channel);
++void mt76x2_external_pa_rf_dac_control(struct _RTMP_ADAPTER *ad, uint8_t channel);
++void mt76x2_tssi_calibration(struct _RTMP_ADAPTER *ad, uint8_t channel);
++void mt76x2_tssi_compensation(struct _RTMP_ADAPTER *ad, uint8_t channel);
++int mt76x2_set_ed_cca(struct _RTMP_ADAPTER *ad, uint8_t enable);
++int mt76x2_reinit_agc_gain(struct _RTMP_ADAPTER *ad, uint8_t channel);
++int mt76x2_reinit_hi_lna_gain(struct _RTMP_ADAPTER *ad, uint8_t channel);
+ void mt76x2_get_external_lna_gain(struct _RTMP_ADAPTER *ad);
+ void mt76x2_get_agc_gain(struct _RTMP_ADAPTER *ad, BOOLEAN init_phase);
+-char get_chl_grp(u8 channel);
++uint8_t get_chl_grp(uint8_t channel);
+ 
+-char get_low_mid_hi_index(u8 channel);
+-void mt76x2_tx_pwr_gain(struct _RTMP_ADAPTER *ad, u8 channel, u8 bw);
++uint8_t get_low_mid_hi_index(uint8_t channel);
++void mt76x2_tx_pwr_gain(struct _RTMP_ADAPTER *ad, uint8_t channel, uint8_t bw);
+ 
+ void percentage_delta_pwr(struct _RTMP_ADAPTER *ad);
+ 
+@@ -39,12 +39,12 @@ void mt76x2_temp_tx_alc(struct _RTMP_ADA
+ #endif /* RTMP_TEMPERATURE_TX_ALC */
+ 
+ #ifdef SINGLE_SKU_V2
+-void mt76x2_single_sku(struct _RTMP_ADAPTER *ad, u8 channel);
++void mt76x2_single_sku(struct _RTMP_ADAPTER *ad, uint8_t channel);
+ void mt76x2_read_single_sku_info_from_eeprom(struct _RTMP_ADAPTER *ad);
+ void mt76x2_make_up_rate_pwr_table(struct _RTMP_ADAPTER *ad);
+-UCHAR mt76x2_get_sku_channel_base_pwr(struct _RTMP_ADAPTER *ad, u8 channel);
++UCHAR mt76x2_get_sku_channel_base_pwr(struct _RTMP_ADAPTER *ad, uint8_t channel);
+ void mt76x2_update_per_rate_pwr(struct _RTMP_ADAPTER *ad);
+-UCHAR mt76x2_update_sku_pwr(struct _RTMP_ADAPTER *ad, u8 channel);
++UCHAR mt76x2_update_sku_pwr(struct _RTMP_ADAPTER *ad, uint8_t channel);
+ #endif /* SINGLE_SKU_V2 */
+ 
+ #ifdef ED_MONITOR
+@@ -58,7 +58,7 @@ VOID mt76x2_ate_SendNullFrame(struct _RT
+ #endif /* RALINK_ATE */
+ 
+ struct mt76x2_frequency_item {
+-	u8 channel;
++	uint8_t channel;
+ 	u32 fcal_target;
+ 	u32 sdm_integer;
+ 	u32 sdm_fraction;	
+Index: mt76x2e-p4rev-113843/src/include/rtmp_chip.h
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/include/rtmp_chip.h
++++ mt76x2e-p4rev-113843/src/include/rtmp_chip.h
+@@ -511,23 +511,23 @@ enum RXWI_FRQ_OFFSET_FIELD {
+ #ifdef RT_BIG_ENDIAN
+ typedef union _EEPROM_ANTENNA_STRUC {
+ 	struct {
+-		USHORT RssiIndicationMode:1; 	/* RSSI indication mode */
+-		USHORT Rsv:1;
+-		USHORT BoardType:2; 		/* 0: mini card; 1: USB pen */
+-		USHORT RfIcType:4;			/* see E2PROM document */
+-		USHORT TxPath:4;			/* 1: 1T, 2: 2T, 3: 3T */
+-		USHORT RxPath:4;			/* 1: 1R, 2: 2R, 3: 3R */
++		uint16_t RssiIndicationMode:1; 	/* RSSI indication mode */
++		uint16_t Rsv:1;
++		uint16_t BoardType:2; 		/* 0: mini card; 1: USB pen */
++		uint16_t RfIcType:8;			/* see E2PROM document */
++		uint16_t TxPath:4;			/* 1: 1T, 2: 2T, 3: 3T */
++		uint16_t RxPath:4;			/* 1: 1R, 2: 2R, 3: 3R */
+ 	} field;
+ 	USHORT word;
+ } EEPROM_ANTENNA_STRUC, *PEEPROM_ANTENNA_STRUC;
+ #else
+ typedef union _EEPROM_ANTENNA_STRUC {
+ 	struct {
+-		USHORT RxPath:4;			/* 1: 1R, 2: 2R, 3: 3R */
+-		USHORT TxPath:4;			/* 1: 1T, 2: 2T, 3: 3T */
+-		USHORT RfIcType:4;			/* see E2PROM document */
+-		USHORT BoardType:2; 		/* 0: mini card; 1: USB pen */
+-		USHORT Rsv:1;
++		uint16_t RxPath:4;			/* 1: 1R, 2: 2R, 3: 3R */
++		uint16_t TxPath:4;			/* 1: 1T, 2: 2T, 3: 3T */
++		uint16_t RfIcType:8;			/* see E2PROM document */
++		uint16_t BoardType:2; 		/* 0: mini card; 1: USB pen */
++		uint16_t Rsv:1;
+ 		USHORT RssiIndicationMode:1; 	/* RSSI indication mode */	
+ 	} field;
+ 	USHORT word;

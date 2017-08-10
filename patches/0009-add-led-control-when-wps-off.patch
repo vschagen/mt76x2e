@@ -1,0 +1,15 @@
+Index: mt76x2e-p4rev-113843/src/ap/ap_cfg.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/ap/ap_cfg.c	2015-05-22 09:36:54.893764700 +0800
++++ mt76x2e-p4rev-113843/src/ap/ap_cfg.c	2015-05-22 09:38:20.369762928 +0800
+@@ -11434,6 +11434,10 @@
+ #endif /* WSC_V2_SUPPORT */
+ 		)
+     {
++#ifdef WSC_LED_SUPPORT
++	WPSLEDStatus = LED_RADIO_ON;
++	RTMPSetLED(pAd, WPSLEDStatus);
++#endif /* WSC_LED_SUPPORT */
+         pWscControl->bWscTrigger = FALSE;
+         DBGPRINT(RT_DEBUG_TRACE, ("Set_WscGetConf_Proc: WPS is disabled.\n"));
+ 		return FALSE;

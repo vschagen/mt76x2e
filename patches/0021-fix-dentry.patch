@@ -1,0 +1,13 @@
+Index: mt76x2e-p4rev-113843/src/os/linux/rt_profile.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/os/linux/rt_profile.c
++++ mt76x2e-p4rev-113843/src/os/linux/rt_profile.c
+@@ -237,7 +237,7 @@ NDIS_STATUS	RTMPReadParametersHook(RTMP_
+ 		{
+ #ifndef OS_ABL_SUPPORT
+ 			// TODO: need to roll back when convert into OSABL code
+-				 fsize = (ULONG)srcf->f_dentry->d_inode->i_size;
++				 fsize = (ULONG)srcf->f_path.dentry->d_inode->i_size;
+ 				if (buf_size < (fsize + 1))
+ 					buf_size = fsize + 1;
+ #endif /* OS_ABL_SUPPORT */
