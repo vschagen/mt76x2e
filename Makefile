@@ -40,7 +40,7 @@ include $(INCLUDE_DIR)/package.mk
 TAR_CMD=$(HOST_TAR) -C $(1)/ $(TAR_OPTIONS)
 
 define KernelPackage/mt76x2e
-  CATEGORY:=Firefly Configuration
+  CATEGORY:=MTK Properties
   SUBMENU:=Drivers
   TITLE:=Ralink mt76x2e wifi AP driver
   FILES:=$(PKG_BUILD_DIR)/build/mt76x2e.ko
