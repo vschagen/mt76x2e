@@ -1,0 +1,26 @@
+Index: mt7603e-4.0.1.0/rlt_wifi/ap/ap_cfg.c
+===================================================================
+--- mt7603e-4.0.1.0.orig/rlt_wifi/ap/ap_cfg.c
++++ mt7603e-4.0.1.0/rlt_wifi/ap/ap_cfg.c
+@@ -6384,7 +6384,7 @@ INT Set_ARPSpoofChk_Enable_Proc(RTMP_ADA
+ 
+ INT Show_DriverInfo_Proc(RTMP_ADAPTER *pAd, RTMP_STRING *arg)
+ {
+-	DBGPRINT(RT_DEBUG_OFF, ("driver version: %s (%s %s) .\n", AP_DRIVER_VERSION, __DATE__, __TIME__));
++	DBGPRINT(RT_DEBUG_OFF, ("driver version: %s .\n", AP_DRIVER_VERSION));
+ 
+ #ifdef CONFIG_ANDES_SUPPORT
+ 	if (pAd->chipCap.MCUType == ANDES) {
+Index: mt7603e-4.0.1.0/rlt_wifi/common/cmm_info.c
+===================================================================
+--- mt7603e-4.0.1.0.orig/rlt_wifi/common/cmm_info.c
++++ mt7603e-4.0.1.0/rlt_wifi/common/cmm_info.c
+@@ -78,7 +78,7 @@ INT Set_DriverVersion_Proc(RTMP_ADAPTER
+ {
+ #ifdef CONFIG_AP_SUPPORT
+ 	IF_DEV_CONFIG_OPMODE_ON_AP(pAd)
+-		DBGPRINT(RT_DEBUG_OFF, ("Driver version-%s %s %s\n", AP_DRIVER_VERSION, __DATE__, __TIME__));
++		DBGPRINT(RT_DEBUG_OFF, ("Driver version-%s \n", AP_DRIVER_VERSION));
+ #endif /* CONFIG_AP_SUPPORT */
+ 
+ 

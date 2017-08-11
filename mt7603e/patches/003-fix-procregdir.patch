@@ -1,0 +1,78 @@
+Index: mt7603e-4.0.1.0/rlt_wifi/os/linux/rt_proc.c
+===================================================================
+--- mt7603e-4.0.1.0.orig/rlt_wifi/os/linux/rt_proc.c
++++ mt7603e-4.0.1.0/rlt_wifi/os/linux/rt_proc.c
+@@ -61,7 +61,7 @@ int wl_proc_exit(void);
+ #endif /* PROCREG_DIR */
+ 
+ #ifdef CONFIG_PROC_FS
+-extern struct proc_dir_entry *procRegDir;
++extern struct proc_dir_entry *procRegDir7603e;
+ 
+ #ifdef VIDEO_TURBINE_SUPPORT
+ extern BOOLEAN UpdateFromGlobal;
+@@ -381,7 +381,7 @@ int wl_video_proc_init(void)
+ 	GLOBAL_AP_VIDEO_CONFIG.TxLifeTime = 0;
+ 	GLOBAL_AP_VIDEO_CONFIG.TxRetryLimit = 0;
+ 
+-		proc_ralink_wl = proc_mkdir("wl", procRegDir);
++		proc_ralink_wl = proc_mkdir("wl", procRegDir7603e);
+ 
+ 	if (proc_ralink_wl)
+ 		proc_ralink_wl_video = proc_mkdir("VideoTurbine", proc_ralink_wl);
+@@ -498,10 +498,10 @@ int wl_video_proc_exit(void)
+ 
+ int wl_proc_init(void)
+ {
+-	if (procRegDir == NULL)
+-		procRegDir = proc_mkdir(PROCREG_DIR, NULL);
++	if (procRegDir7603e == NULL)
++		procRegDir7603e = proc_mkdir(PROCREG_DIR, NULL);
+ 
+-	if (procRegDir) {
++	if (procRegDir7603e) {
+ #ifdef VIDEO_TURBINE_SUPPORT
+ 		wl_video_proc_init();
+ #endif /* VIDEO_TURBINE_SUPPORT */
+@@ -518,7 +518,7 @@ int wl_proc_exit(void)
+ 		remove_proc_entry("Video", proc_ralink_wl);
+ 	}
+ 	if (proc_ralink_wl)
+-		remove_proc_entry("wl", procRegDir);
++		remove_proc_entry("wl", procRegDir7603e);
+ #endif /* VIDEO_TURBINE_SUPPORT */
+ 
+ 	
+Index: mt7603e-4.0.1.0/rlt_wifi/os/linux/rt_linux.c
+===================================================================
+--- mt7603e-4.0.1.0.orig/rlt_wifi/os/linux/rt_linux.c
++++ mt7603e-4.0.1.0/rlt_wifi/os/linux/rt_linux.c
+@@ -305,8 +305,8 @@ int32_t FlashWrite(
+ extern int ra_mtd_write(int num, loff_t to, size_t len, const u_char *buf);
+ extern int ra_mtd_read(int num, loff_t from, size_t len, u_char *buf);
+ #else
+-extern int ra_mtd_write_nm(char *name, loff_t to, size_t len, const u_char *buf);
+-extern int ra_mtd_read_nm(char *name, loff_t from, size_t len, u_char *buf);
++extern int ra_mtd_write_nm7603e(char *name, loff_t to, size_t len, const u_char *buf);
++extern int ra_mtd_read_nm7603e(char *name, loff_t from, size_t len, u_char *buf);
+ #endif
+ 
+ #endif /* CONFIG_RALINK_FLASH_API */
+@@ -322,7 +322,7 @@ void RtmpFlashRead(
+ #ifdef RA_MTD_RW_BY_NUM
+ 	ra_mtd_read(MTD_NUM_FACTORY, 0, (size_t) b, p);
+ #else
+-	ra_mtd_read_nm("Factory", a&0xFFFF, (size_t) b, p);
++	ra_mtd_read_nm7603e("Factory", a&0xFFFF, (size_t) b, p);
+ #endif
+ #endif /* CONFIG_RALINK_FLASH_API */
+ }
+@@ -338,7 +338,7 @@ void RtmpFlashWrite(
+ #ifdef RA_MTD_RW_BY_NUM
+ 	ra_mtd_write(MTD_NUM_FACTORY, 0, (size_t) b, p);
+ #else
+-	ra_mtd_write_nm("Factory", a&0xFFFF, (size_t) b, p);
++	ra_mtd_write_nm7603e("Factory", a&0xFFFF, (size_t) b, p);
+ #endif
+ #endif /* CONFIG_RALINK_FLASH_API */
+ }
