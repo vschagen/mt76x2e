@@ -85,7 +85,7 @@ define KernelPackage/mt76x2e/install
 		$(INSTALL_BIN) ./files/mt7602e.sh $(1)/lib/wifi/ ; \
 		$(INSTALL_BIN) ./files/mt7602e.dat $(1)/etc/wireless/mt7602e/ ; \
 		$(INSTALL_BIN) ./files/mt7602e*.bin $(1)/etc/wireless/mt7602e/ ; \
-		$(INSTALL_BIN) ./files/SingleSKU.dat $(1)/etc/wireless/mt7602/SingleSKU.dat ; \
+		$(INSTALL_BIN) ./files/SingleSKU.dat $(1)/etc/wireless/mt7602e/SingleSKU.dat ; \
 		echo p$(P4REV) > $(1)/etc/wireless/mt7602e/version; \
 	fi
 	if [ "$$(CONFIG_MT76X2E_RT_SECOND_CARD)" = "7612" ] || [ "$$(CONFIG_MT76X2E_RT_SECOND_CARD)" = "7612e" ]; then \
@@ -93,7 +93,7 @@ define KernelPackage/mt76x2e/install
 		$(INSTALL_BIN) ./files/mt7612e.sh $(1)/lib/wifi/ ; \
 		$(INSTALL_BIN) ./files/mt7612e.dat $(1)/etc/wireless/mt7612e/ ; \
 		$(INSTALL_BIN) ./files/mt7612e*.bin $(1)/etc/wireless/mt7612e/ ; \
-		$(INSTALL_BIN) ./files/SingleSKU.dat $(1)/etc/wireless/mt7612/SingleSKU.dat ; \
+		$(INSTALL_BIN) ./files/SingleSKU.dat $(1)/etc/wireless/mt7612e/SingleSKU.dat ; \
 		echo p$(P4REV) > $(1)/etc/wireless/mt7612e/version; \
 	fi
 	$(INSTALL_BIN) ./files/ralink_common.sh $(1)/lib/wifi/ralink_common.sh

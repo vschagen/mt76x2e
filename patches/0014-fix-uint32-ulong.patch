@@ -341,3 +341,125 @@ Index: mt76x2e-p4rev-113843/src/include/rtmp_chip.h
  		USHORT RssiIndicationMode:1; 	/* RSSI indication mode */	
  	} field;
  	USHORT word;
+Index: mt76x2e-p4rev-113843/src/ap/ap_repeater.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/ap/ap_repeater.c
++++ mt76x2e-p4rev-113843/src/ap/ap_repeater.c
+@@ -884,7 +884,7 @@ INT	Show_Repeater_Cli_Proc(
+ 			//getRate(pEntry->HTPhyMode, &DataRate);
+ 			RtmpDrvRateGet(pAd, pEntry->HTPhyMode.field.MODE, pEntry->HTPhyMode.field.ShortGI,
+ 				 pEntry->HTPhyMode.field.BW,pEntry->HTPhyMode.field.MCS,
+-				 newRateGetAntenna(pEntry->HTPhyMode.field.MCS),&DataRate);
++				 newRateGetAntenna(pEntry->HTPhyMode.field.MCS), (uint32_t *) &DataRate);
+ 			DataRate /= 500000;
+ 			DataRate /= 2;
+ 
+Index: mt76x2e-p4rev-113843/src/common/cmm_cfg.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/common/cmm_cfg.c
++++ mt76x2e-p4rev-113843/src/common/cmm_cfg.c
+@@ -1316,7 +1316,7 @@ INT RTMP_COM_IoctlHandle(
+ 			RtmpDrvRateGet(pAd, HtPhyMode.field.MODE, GI,
+ 							BW, HtPhyMode.field.MCS,
+ 							pAd->Antenna.field.TxPath,
+-							(ULONG *)&pRate->BitRate);
++							(uint32_t *)&pRate->BitRate);
+ 		}
+ 			break;
+ #endif /* CONFIG_AP_SUPPORT */
+Index: mt76x2e-p4rev-113843/src/common/cmm_info.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/common/cmm_info.c
++++ mt76x2e-p4rev-113843/src/common/cmm_info.c
+@@ -4880,7 +4880,7 @@ INT Show_MacTable_Proc(RTMP_ADAPTER *pAd
+ 			//getRate(pEntry->HTPhyMode, &DataRate);
+ 			RtmpDrvRateGet(pAd, pEntry->HTPhyMode.field.MODE, pEntry->HTPhyMode.field.ShortGI,
+ 		                          pEntry->HTPhyMode.field.BW, pEntry->HTPhyMode.field.MCS,
+-		                          newRateGetAntenna(pEntry->MaxHTPhyMode.field.MCS), &DataRate);
++		                          newRateGetAntenna(pEntry->MaxHTPhyMode.field.MCS), (uint32_t *) &DataRate);
+ 			DataRate /= 500000;
+ 			DataRate /= 2;
+ 			
+@@ -5006,7 +5006,7 @@ INT show_stainfo_proc(RTMP_ADAPTER *pAd,
+ 	//getRate(pEntry->HTPhyMode, &DataRate);
+     RtmpDrvRateGet(pAd, pEntry->HTPhyMode.field.MODE, pEntry->HTPhyMode.field.ShortGI,
+                       pEntry->HTPhyMode.field.BW, pEntry->HTPhyMode.field.MCS,
+-                      newRateGetAntenna(pEntry->MaxHTPhyMode.field.MCS), &DataRate);
++                      newRateGetAntenna(pEntry->MaxHTPhyMode.field.MCS), (uint32_t *) &DataRate);
+ 	DataRate /= 500000;
+ 	DataRate /= 2;
+ 	
+@@ -5463,7 +5463,7 @@ void  getRate(HTTRANSMIT_SETTING HTSetti
+ {
+ 	VOID *pAd = NULL;
+ 	RtmpDrvRateGet(pAd, HTSetting.field.MODE,HTSetting.field.ShortGI,
+-		HTSetting.field.BW,HTSetting.field.MCS,newRateGetAntenna(HTSetting.field.MCS),fLastTxRxRate);
++		HTSetting.field.BW,HTSetting.field.MCS,newRateGetAntenna(HTSetting.field.MCS), (uint32_t *) fLastTxRxRate);
+ 	*(fLastTxRxRate) /= 500000;
+ 	*(fLastTxRxRate) /= 2;
+ 	return;
+Index: mt76x2e-p4rev-113843/src/common/rt_os_util.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/common/rt_os_util.c
++++ mt76x2e-p4rev-113843/src/common/rt_os_util.c
+@@ -30,7 +30,7 @@ VOID RtmpDrvRateGet(
+ 	IN	UINT8					BW,
+ 	IN	UINT8					MCS,
+ 	IN      UINT8                                   Antenna,
+-	OUT	ULONG					*pRate)
++	OUT	uint32_t					*pRate)
+ {
+ 	UINT32 MCS_1NSS = (UINT32) MCS;
+ 	*pRate = 0;
+Index: mt76x2e-p4rev-113843/src/include/ap_cfg.h
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/include/ap_cfg.h
++++ mt76x2e-p4rev-113843/src/include/ap_cfg.h
+@@ -88,7 +88,7 @@ VOID RtmpDrvRateGet(
+ 	IN	UINT8					BW,
+ 	IN	UINT8					MCS,
+ 	IN  UINT8                   Antena,
+-	OUT	ULONG					*pRate);
++	OUT	uint32_t					*pRate);
+ 
+ #ifdef WSC_AP_SUPPORT
+ VOID RTMPIoctlWscProfile(
+Index: mt76x2e-p4rev-113843/src/include/rt_os_util.h
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/include/rt_os_util.h
++++ mt76x2e-p4rev-113843/src/include/rt_os_util.h
+@@ -554,7 +554,7 @@ VOID RtmpDrvRateGet(
+ 	IN UINT8 BW,
+ 	IN UINT8 MCS,
+ 	IN UINT8 Antenna,
+-	OUT ULONG *pRate);
++	OUT uint32_t *pRate);
+ 
+ char * rtstrchr(const char * s, int c);
+ 
+Index: mt76x2e-p4rev-113843/src/os/linux/cfg80211/cfg80211drv.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/os/linux/cfg80211/cfg80211drv.c
++++ mt76x2e-p4rev-113843/src/os/linux/cfg80211/cfg80211drv.c
+@@ -622,7 +622,7 @@ BOOLEAN CFG80211DRV_StaGet(
+ 	//getRate(pEntry->HTPhyMode, &DataRate);
+ 	RtmpDrvRateGet(pAd, pEntry->HTPhyMode.field.MODE, pEntry->HTPhyMode.field.ShortGI,
+ 				 pEntry->HTPhyMode.field.BW,pEntry->HTPhyMode.field.MCS,
+-				 newRateGetAntenna(pEntry->MaxHTPhyMode.field.MCS),&DataRate);
++				 newRateGetAntenna(pEntry->MaxHTPhyMode.field.MCS), (uint32_t *) &DataRate);
+ 	DataRate /= 500000;
+ 	DataRate /= 2;
+
+Index: mt76x2e-p4rev-113843/src/sniffer/sniffer_prism.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/sniffer/sniffer_prism.c
++++ mt76x2e-p4rev-113843/src/sniffer/sniffer_prism.c
+@@ -155,7 +155,7 @@ void send_prism_monitor_packets(IN PNET_
+ 		ph->noise.status = 0;
+ 		ph->noise.len = 4;
+ 		ph->noise.data = 0;
+-		RtmpDrvRateGet(NULL, PHYMODE, ShortGI, BW, MCS, newRateGetAntenna(MCS), &ph->rate.data);
++		RtmpDrvRateGet(NULL, PHYMODE, ShortGI, BW, MCS, newRateGetAntenna(MCS), (uint32_t *) &ph->rate.data);
+ 	ph->rate.data /= 1000000;
+ 		ph->rate.did = DIDmsg_lnxind_wlansniffrm_rate;
+ 		ph->rate.status = 0;
