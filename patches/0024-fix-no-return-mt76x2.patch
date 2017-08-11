@@ -1,0 +1,12 @@
+Index: mt76x2e-p4rev-113843/src/chips/mt76x2.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/chips/mt76x2.c
++++ mt76x2e-p4rev-113843/src/chips/mt76x2.c
+@@ -2907,6 +2907,7 @@ static INT rf_tr_agc_config(RTMP_ADAPTER
+ 	signed char rx_agc_fc_offset[3] = {2,2,2}; /* array idx 0: 20M, 1:40M, 2:80m */
+ 	UINT8 tx_agc_fc_offset[3] = {0,0,0}; /* array idx 0: 20M, 1:40M, 2:80m */
+ 	CHAR rf32_val, rf31_val, rf_diff;
++    return 0;
+ }
+ 
+ void mt76x2_get_tx_pwr_per_rate(RTMP_ADAPTER *ad)

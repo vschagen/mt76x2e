@@ -1,0 +1,71 @@
+Index: mt76x2e-p4rev-113843/src/common/cmm_data.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/common/cmm_data.c
++++ mt76x2e-p4rev-113843/src/common/cmm_data.c
+@@ -773,6 +773,7 @@ NDIS_STATUS MlmeHardTransmitMgmtRing(
+ 	UCHAR PID, wcid, tx_rate;
+ 	HTTRANSMIT_SETTING *transmit;
+ 	UINT8 TXWISize = pAd->chipCap.TXWISize;
++    UINT32 apidx;
+ #ifdef CONFIG_AP_SUPPORT
+ #ifdef SPECIFIC_TX_POWER_SUPPORT
+ 	UCHAR TxPwrAdj = 0;
+@@ -872,7 +873,7 @@ NDIS_STATUS MlmeHardTransmitMgmtRing(
+ #ifdef CONFIG_AP_SUPPORT
+ #ifdef SPECIFIC_TX_POWER_SUPPORT
+ 					/* Find which MBSSID to be send this probeRsp */
+-					UINT32 apidx = get_apidx_by_addr(pAd, pHeader_802_11->Addr2);
++					apidx = get_apidx_by_addr(pAd, pHeader_802_11->Addr2);
+ 
+ 					if ( !(apidx >= pAd->ApCfg.BssidNum) && 
+ 					     (pAd->ApCfg.MBSSID[apidx].TxPwrAdj != -1) /* &&
+@@ -2325,6 +2326,7 @@ BOOLEAN RTMPCheckEtherType(
+ 	OUT UCHAR *pUserPriority,
+ 	OUT UCHAR *pQueIdx)
+ {
++    BOOLEAN isMcast;
+ 	UINT16 TypeLen;
+ 	UCHAR Byte0, Byte1, *pSrcBuf, up = 0;
+ 
+@@ -2334,7 +2336,7 @@ BOOLEAN RTMPCheckEtherType(
+ 	RTMP_SET_PACKET_SPECIFIC(pPacket, 0);
+ 
+ #ifdef CONFIG_AP_SUPPORT
+-	BOOLEAN isMcast = FALSE;
++	isMcast = FALSE;
+ 	if(IS_MULTICAST_MAC_ADDR(pSrcBuf))
+ 		isMcast = TRUE;
+ #endif /* CONFIG_AP_SUPPORT */
+@@ -3590,9 +3592,9 @@ VOID dev_rx_mgmt_frm(RTMP_ADAPTER *pAd,
+ 	PNDIS_PACKET pRxPacket = pRxBlk->pRxPacket;
+ 	INT op_mode = pRxBlk->OpMode;
+ 	BOOLEAN 	bPassTheBcastPkt = FALSE;
+-	INT			i;
+ #ifdef APCLI_SUPPORT
+ #ifdef APCLI_CERT_SUPPORT	
++	INT			i;
+ 	PAPCLI_STRUCT pApCliEntry = NULL;
+ #endif /* APCLI_CERT_SUPPOR */
+ #endif /* APCLI_SUPPORT */
+@@ -4009,7 +4011,7 @@ BOOLEAN rtmp_rx_done_handle(RTMP_ADAPTER
+ 
+             if (pFceInfo->info_type == CMD_PACKET)
+             {
+-                pci_rx_cmd_msg_complete(pAd, pFceInfo, pRxInfo);
++                pci_rx_cmd_msg_complete(pAd, pFceInfo, (PUCHAR) pRxInfo);
+                 RELEASE_NDIS_PACKET(pAd, pRxPacket, NDIS_STATUS_SUCCESS);
+                 continue;
+             } 
+Index: mt76x2e-p4rev-113843/src/common/cmm_data_pci.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/common/cmm_data_pci.c
++++ mt76x2e-p4rev-113843/src/common/cmm_data_pci.c
+@@ -2136,7 +2136,7 @@ BOOLEAN RxRing1DoneInterruptHandle(RTMP_
+ 		if (pFceInfo->info_type == CMD_PACKET)
+ 		{
+ 			DBGPRINT(RT_DEBUG_INFO, ("%s: Receive command packet.\n", __FUNCTION__));
+-			pci_rx_cmd_msg_complete(pAd, pFceInfo, pRxInfo);
++			pci_rx_cmd_msg_complete(pAd, pFceInfo, (PUCHAR) pRxInfo);
+ 			RELEASE_NDIS_PACKET(pAd, pRxPacket, NDIS_STATUS_SUCCESS);
+ 			continue;
+ 		} else {
