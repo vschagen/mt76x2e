@@ -1,0 +1,138 @@
+Index: mt76x2e-p4rev-113843/src/ap/ap_cfg.c
+===================================================================
+--- mt76x2e-p4rev-113843.orig/src/ap/ap_cfg.c
++++ mt76x2e-p4rev-113843/src/ap/ap_cfg.c
+@@ -1650,7 +1650,7 @@ VOID RTMPAPGetAssoMacTable(
+ 			//getRate(pEntry->HTPhyMode, &DataRate);
+ 			RtmpDrvRateGet(pAd, pEntry->HTPhyMode.field.MODE, pEntry->HTPhyMode.field.ShortGI,
+ 		                          pEntry->HTPhyMode.field.BW, pEntry->HTPhyMode.field.MCS,
+-		                          newRateGetAntenna(pEntry->HTPhyMode.field.MCS), &DataRate);
++		                          newRateGetAntenna(pEntry->HTPhyMode.field.MCS), (UINT32 *)&DataRate);
+ 			DataRate /= 500000;
+ 			DataRate /= 2;
+ 			
+@@ -2361,7 +2361,7 @@ INT RTMPAPSetInformation(
+     			{
+ 					RTMP_GET_OS_PID(pObj->IappPid, IappPid);
+ 					pObj->IappPid_nr = IappPid;
+-					DBGPRINT(RT_DEBUG_TRACE, ("RT_SET_APD_PID::(IappPid=%lu(0x%x))\n", IappPid, pObj->IappPid));
++					// DBGPRINT(RT_DEBUG_TRACE, ("RT_SET_APD_PID::(IappPid=%lu(0x%x))\n", IappPid, pObj->IappPid));
+ 				}
+     		}
+ 			break;
+@@ -2378,7 +2378,7 @@ INT RTMPAPSetInformation(
+     			{
+ 					RTMP_GET_OS_PID(pObj->apd_pid, apd_pid);
+ 					pObj->apd_pid_nr = apd_pid;
+-					DBGPRINT(RT_DEBUG_TRACE, ("RT_SET_APD_PID::(ApdPid=%lu(0x%x))\n", apd_pid, pObj->apd_pid));
++					// DBGPRINT(RT_DEBUG_TRACE, ("RT_SET_APD_PID::(ApdPid=%lu(0x%x))\n", apd_pid, pObj->apd_pid));
+ 				}
+     		}
+ 			break;
+@@ -3114,7 +3114,7 @@ INT RTMPAPSetInformation(
+ 				INT retval;
+ 				NDIS80211PSK tmpPSK;
+ 				pObj = (POS_COOKIE) pAd->OS_Cookie;
+-				UINT apidx = pObj->ioctl_if;
++				// UINT apidx = pObj->ioctl_if;
+ 				NdisZeroMemory(&tmpPSK, sizeof(tmpPSK));
+ 				Status = copy_from_user(&tmpPSK, wrq->u.data.pointer, wrq->u.data.length);
+ 				hex_dump("Set::OID_802_11_PASSPHRASE ==>", &tmpPSK.WPAKey[0], tmpPSK.WPAKeyLen);
+@@ -3949,7 +3949,7 @@ INT RTMPAPQueryInformation(
+ 	            wrq->u.data.length = sizeof(pAd->CommonCfg.BBPCurrentBW);
+ 		     ulInfo = pAd->CommonCfg.BBPCurrentBW;	
+ 	            Status = copy_to_user(wrq->u.data.pointer, &ulInfo, wrq->u.data.length);
+-	            DBGPRINT(RT_DEBUG_TRACE, ("Query::OID_802_11_CHANNEL_WIDTH (%u)\n",ulInfo));
++	            DBGPRINT(RT_DEBUG_TRACE, ("Query::OID_802_11_CHANNEL_WIDTH (%lu)\n",ulInfo));
+ 	            break;
+ 	        }
+ 		break;
+@@ -3963,7 +3963,7 @@ INT RTMPAPQueryInformation(
+ 	            {
+ 					Status = -EFAULT;
+ 	            }
+-	            DBGPRINT(RT_DEBUG_TRACE, ("Query::RT_OID_802_11_COUNTRY_REGION (%x)\n",ulInfo));				
++	            DBGPRINT(RT_DEBUG_TRACE, ("Query::RT_OID_802_11_COUNTRY_REGION (%lu)\n",ulInfo));				
+ 	            break;
+ 
+ 		case OID_802_11_BEACON_PERIOD:
+@@ -3973,7 +3973,7 @@ INT RTMPAPQueryInformation(
+ 	            {
+ 					Status = -EFAULT;
+ 	            }
+-	            DBGPRINT(RT_DEBUG_TRACE, ("Query::OID_802_11_BEACON_PERIOD (%u)\n",ulInfo));
++	            DBGPRINT(RT_DEBUG_TRACE, ("Query::OID_802_11_BEACON_PERIOD (%lu)\n",ulInfo));
+ 		     break;
+ 
+ 	        case RT_OID_802_11_TX_POWER_LEVEL_1:
+@@ -4037,7 +4037,7 @@ INT RTMPAPQueryInformation(
+ 	            wrq->u.data.length = sizeof(ulInfo);
+ 	            ulInfo = pAd->CommonCfg.TxPreamble;				
+ 	            Status = copy_to_user(wrq->u.data.pointer, &ulInfo, wrq->u.data.length);
+-	            DBGPRINT(RT_DEBUG_TRACE, ("Query::RT_OID_802_11_PREAMBLE(=%d)\n", pAd->CommonCfg.TxPreamble));
++	            DBGPRINT(RT_DEBUG_TRACE, ("Query::RT_OID_802_11_PREAMBLE(=%lu )\n", pAd->CommonCfg.TxPreamble));
+ 	            break;
+ 
+ 	        case OID_802_11_HT_STBC:
+@@ -4071,14 +4071,14 @@ INT RTMPAPQueryInformation(
+ 	            wrq->u.data.length = sizeof(ulInfo);
+ 		     ulInfo = pAd->CommonCfg.BACapability.field.AmsduEnable;	
+ 	            Status = copy_to_user(wrq->u.data.pointer, &ulInfo, wrq->u.data.length);
+-		     DBGPRINT(RT_DEBUG_TRACE, ("Query::OID_802_11_AMSDU (=%d)\n",ulInfo));
++		     DBGPRINT(RT_DEBUG_TRACE, ("Query::OID_802_11_AMSDU (= %lu )\n",ulInfo));
+ 		     break;			
+ 
+ 		case OID_802_11_AMPDU:
+ 	            wrq->u.data.length = sizeof(ulInfo);
+ 		     ulInfo = pAd->CommonCfg.BACapability.field.AutoBA;	
+ 	            Status = copy_to_user(wrq->u.data.pointer, &ulInfo, wrq->u.data.length);
+-		     DBGPRINT(RT_DEBUG_TRACE, ("Query::OID_802_11_AMPDU (=%d)\n",ulInfo));
++		     DBGPRINT(RT_DEBUG_TRACE, ("Query::OID_802_11_AMPDU (= %lu )\n",ulInfo));
+ 		     break;
+ 
+ 		case OID_802_11_CURRENTCHANNEL:
+@@ -6185,7 +6185,7 @@ INT Set_AP_PROBE_RSP_TIMES(
+         if ((input >= 0) && (input <= 10))
+                 pAd->ApCfg.MBSSID[apidx].ProbeRspTimes = input;
+         else
+-                DBGPRINT(RT_DEBUG_ERROR, ("AP[%d]->ProbeRspTimes: Out of Range\n"));	
++                DBGPRINT(RT_DEBUG_ERROR, ("AP[ %d ]->ProbeRspTimes: Out of Range\n",apidx));	
+ 
+ 	DBGPRINT(RT_DEBUG_TRACE, ("AP[%d]->ProbeRspTimes: %d\n", apidx, pAd->ApCfg.MBSSID[apidx].ProbeRspTimes));
+ 
+@@ -6215,7 +6215,7 @@ INT Set_AP_PKT_PWR(
+ 	if ((input >= 0) && (input <= 15))
+         	pAd->ApCfg.MBSSID[apidx].TxPwrAdj = input;
+ 	else
+-		DBGPRINT(RT_DEBUG_ERROR, ("AP[%d]->PktPwr: Out of Range\n"));
++		DBGPRINT(RT_DEBUG_ERROR, ("AP[%d]->PktPwr: Out of Range\n", apidx));
+ 
+ 	DBGPRINT(RT_DEBUG_TRACE, ("AP[%d]->PktPwr: %d\n", apidx, pAd->ApCfg.MBSSID[apidx].TxPwrAdj));
+ 
+@@ -7786,7 +7786,7 @@ INT	Show_Sat_Proc(
+ {
+ 	/* Sanity check for calculation of sucessful count */
+ 	printk("TransmitCountFromOS = %d\n", pAd->WlanCounters.TransmitCountFrmOs.u.LowPart);
+-	printk("TransmittedFragmentCount = %ld\n", pAd->WlanCounters.TransmittedFragmentCount.u.LowPart + pAd->WlanCounters.MulticastTransmittedFrameCount.QuadPart);
++	printk("TransmittedFragmentCount = %llu\n", pAd->WlanCounters.TransmittedFragmentCount.u.LowPart + pAd->WlanCounters.MulticastTransmittedFrameCount.QuadPart);
+ 	printk("MulticastTransmittedFrameCount = %d\n", pAd->WlanCounters.MulticastTransmittedFrameCount.u.LowPart);
+ 	printk("FailedCount = %d\n", pAd->WlanCounters.FailedCount.u.LowPart);
+ 	printk("RetryCount = %d\n", pAd->WlanCounters.RetryCount.u.LowPart);
+@@ -7916,7 +7916,7 @@ INT	Show_Sat_Reset_Proc(
+ {
+ 	/* Sanity check for calculation of sucessful count */
+ 
+-	printk("TransmittedFragmentCount = %ld\n", pAd->WlanCounters.TransmittedFragmentCount.u.LowPart + pAd->WlanCounters.MulticastTransmittedFrameCount.QuadPart);
++	printk("TransmittedFragmentCount = %llu \n", pAd->WlanCounters.TransmittedFragmentCount.u.LowPart + pAd->WlanCounters.MulticastTransmittedFrameCount.QuadPart);
+ 	printk("MulticastTransmittedFrameCount = %d\n", pAd->WlanCounters.MulticastTransmittedFrameCount.u.LowPart);
+ 	printk("FailedCount = %d\n", pAd->WlanCounters.FailedCount.u.LowPart);
+ 	printk("RetryCount = %d\n", pAd->WlanCounters.RetryCount.u.LowPart);
+@@ -9833,7 +9833,7 @@ VOID RTMPIoctlStatistics(RTMP_ADAPTER *p
+ 		rxCount = pAd->WlanCounters.ReceivedFragmentCount.QuadPart;
+ 	}
+ 
+-	sprintf(msg+strlen(msg), "Current temperature = %d\A2J\n", pChipCap->current_temp);
++	sprintf(msg+strlen(msg), "Current temperature = %d \n", pChipCap->current_temp);
+ 	sprintf(msg+strlen(msg), "Current thermal value = 0x%08X\n", pChipCap->temp_val);
+     sprintf(msg+strlen(msg), "Tx success                      = %ld\n", txCount);
+ #ifdef ENHANCED_STAT_DISPLAY
